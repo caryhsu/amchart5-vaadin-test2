@@ -34,22 +34,32 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
 
         // 创建 amCharts 根对象
         const root = am5.Root.new(chartContainerRef.current);
+        
         root.setThemes([am5themes_Animated.new(root)]);
 
         // 创建折线图 (Line Chart)
         const chart = root.container.children.push(
             am5xy.XYChart.new(root, {
-                panX: true,
-                panY: true,
-                wheelX: 'panX',
-                wheelY: 'zoomX',
+                panX: false,     // 允許使用者透過滑鼠或觸控拖曳來水平移動（平移）圖表的繪圖區域（沿著 X 軸）
+                panY: false,     // 允許使用者透過滑鼠或觸控拖曳來垂直移動（平移）圖表的繪圖區域（沿著 Y 軸）
+                wheelX: 'panX', // 滾輪滾動時，圖表會沿著 X 軸平移
+                wheelY: 'zoomX',// 滾輪滾動時，圖表會沿著 Y 軸縮放
             })
         );
+
+        // Add cursor
+        const cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
+          behavior: "zoomX"
+        }));
+        cursor.lineY.set("visible", false);        
 
         // 创建 X 轴 (时间轴)
         const xAxis = chart.xAxes.push(
             am5xy.DateAxis.new(root, {
-                baseInterval: { timeUnit: 'day', count: 1 },
+                baseInterval: { 
+                  timeUnit: 'day', 
+                  count: 1 
+                },
                 renderer: am5xy.AxisRendererX.new(root, {}),
             })
         );
@@ -69,9 +79,8 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
               y: am5.percent(100),            // 將圖例的 Y 座標設在容器高度的 100% 處 (底部邊緣)
               centerY: am5.percent(100),      // 將圖例本身的底部邊緣 (100%) 對齊到 Y 座標
               layout: root.horizontalLayout,  // 保持水平排列
-              // (可選) 如果圖例太貼近邊緣，可以加一點偏移
-              dx: 50,  // 向右偏移 10 像素
-              dy: 20, // 向上偏移 10 像素
+              dx: 50,                         // 向右偏移 
+              dy: 20,                         // 向上偏移 
             })
         );
 
@@ -90,10 +99,24 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
                 })
             );
 
+            // Actual bullet
+            series.bullets.push(function () {
+              var bulletCircle = am5.Circle.new(root, {
+                radius: 2,
+                fill: series.get("fill")
+              });
+              return am5.Bullet.new(root, {
+                sprite: bulletCircle
+              })
+            })            
             series.data.setAll(data);
 
             // 向图例添加该系列
             legend.data.push(series);
+
+            chart.set("scrollbarX", am5.Scrollbar.new(root, {
+              orientation: "horizontal"
+            }));
 
             // 可选：给每个系列设置不同的颜色
             // const colors = [
