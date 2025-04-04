@@ -61,8 +61,22 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
             })
         );
 
+        // 创建 Legend (图例)
+        const legend = chart.children.push(
+            am5.Legend.new(root, {
+              x: am5.percent(0),              // 將圖例的 X 座標設在容器寬度的 0% 處 (即最左邊)
+              centerX: am5.percent(0),        // 將圖例本身的左邊緣 (0%) 對齊到 X 座標
+              y: am5.percent(100),            // 將圖例的 Y 座標設在容器高度的 100% 處 (底部邊緣)
+              centerY: am5.percent(100),      // 將圖例本身的底部邊緣 (100%) 對齊到 Y 座標
+              layout: root.horizontalLayout,  // 保持水平排列
+              // (可選) 如果圖例太貼近邊緣，可以加一點偏移
+              dx: 50,  // 向右偏移 10 像素
+              dy: 20, // 向上偏移 10 像素
+            })
+        );
+
         // 使用外部传入的 seriesNames 创建多个 series
-        seriesNames.forEach((seriesName) => {
+        seriesNames.forEach((seriesName, index) => {
             const series = chart.series.push(
                 am5xy.LineSeries.new(root, {
                     name: seriesName,
@@ -77,6 +91,19 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
             );
 
             series.data.setAll(data);
+
+            // 向图例添加该系列
+            legend.data.push(series);
+
+            // 可选：给每个系列设置不同的颜色
+            // const colors = [
+            //     am5.color(0xff5733),
+            //     am5.color(0x33ff57),
+            //     am5.color(0x3357ff),
+            // ];
+
+            // series.strokes.template.set('fill', colors[index]);
+            // series.bullets.push(am5xy.CircleBullet.new(root, { radius: 3 }));
         });
 
         // 清理图表，防止重复渲染
@@ -88,7 +115,7 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
     return (
         <div>
             <h3>{title}</h3>
-            <div ref={chartContainerRef} style={{ width: '100%', height: '400px' }}></div>
+            <div ref={chartContainerRef} style={{ width: '100%', height: '450px', overflow: 'visible'  }}></div>
         </div>
     );
 };
