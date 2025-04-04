@@ -1,0 +1,6 @@
+ContractService.ts
+HelloWorldService.ts
+com/example/application/ContractDTO.ts
+connect-client.default.ts
+endpoints.ts
+com/example/application/ContractDTOModel.ts

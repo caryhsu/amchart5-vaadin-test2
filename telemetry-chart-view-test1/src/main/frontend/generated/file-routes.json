@@ -1,0 +1,40 @@
+[
+  {
+    "route": "",
+    "flowLayout": false,
+    "params": {},
+    "title": "Main Layout",
+    "children": [
+      {
+        "route": "about-hilla",
+        "menu": {
+          "order": 3,
+          "icon": "line-awesome/svg/file.svg"
+        },
+        "title": "About Hilla",
+        "flowLayout": false,
+        "params": {}
+      },
+      {
+        "route": "hello-hilla",
+        "menu": {
+          "order": 2,
+          "icon": "line-awesome/svg/globe-solid.svg"
+        },
+        "title": "Hello Hilla",
+        "flowLayout": false,
+        "params": {}
+      },
+      {
+        "route": "telemetry-view",
+        "menu": {
+          "order": 3,
+          "icon": "line-awesome/svg/chart-bar-solid.svg"
+        },
+        "title": "Telemetry Charts",
+        "flowLayout": false,
+        "params": {}
+      }
+    ]
+  }
+]
