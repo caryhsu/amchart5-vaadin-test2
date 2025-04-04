@@ -18,14 +18,16 @@ const TelemetryView = () => {
     const [seriesNames, setSeriesNames] = useState<string[]>(['series1', 'series2', 'series3']); // 可以动态修改
 
     useEffect(() => {
-        // 模拟数据，时间单位：毫秒（timestamp）
-        setTelemetryData([
-            { timestamp: 1704067200000, series1: 120, series2: 80, series3: 200 },
-            { timestamp: 1704153600000, series1: 150, series2: 90, series3: 220 },
-            { timestamp: 1704240000000, series1: 130, series2: 85, series3: 210 },
-            { timestamp: 1704326400000, series1: 160, series2: 95, series3: 240 },
-            { timestamp: 1704412800000, series1: 170, series2: 100, series3: 250 },
-        ]);
+        // 假設資料是從後端 API URL 獲取的
+        fetch('/api/telemetry-data/telemetry1')
+            .then((response) => response.json())
+            .then((data) => {
+                setTelemetryData(data);
+                // setSeriesNames(Object.keys(data[0]).filter((key) => key !== 'timestamp')); // 排除 timestamp
+            })
+            .catch((error) => {
+                console.error('Error fetching telemetry data:', error);
+            });
     }, []);
 
     return (
