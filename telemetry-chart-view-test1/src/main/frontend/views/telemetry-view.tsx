@@ -12,7 +12,7 @@ export const config: ViewConfig = {
 
 const TelemetryView = () => {
     const [telemetryData, setTelemetryData] = useState<
-        { timestamp: number; series1: number; series2: number; series3: number }[]
+        { timestamp: number; [key: string]: number }[] // 動態的 key: value 結構
     >([]);
 
     const [seriesNames, setSeriesNames] = useState<string[]>(['series1', 'series2', 'series3']); // 可以动态修改
@@ -32,7 +32,11 @@ const TelemetryView = () => {
         <div>
             <h2>Telemetry Historical Records</h2>
             {/* 将 seriesNames 传递给 TelemetryChart */}
-            <TelemetryChart data={telemetryData} title="Telemetry Data" seriesNames={seriesNames} />        
+            <TelemetryChart 
+                data={telemetryData} 
+                title="Telemetry Data" 
+                seriesNames={seriesNames} 
+            />        
         </div>
     );
 
