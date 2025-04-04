@@ -37,16 +37,24 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
         
         root.setThemes([am5themes_Animated.new(root)]);
 
+        root.container.children.push(am5.Label.new(root, {
+          text: title,
+          fontSize: 20,
+          x: am5.percent(50),
+          centerX: am5.percent(50)
+        }));
+
         // 创建折线图 (Line Chart)
         const chart = root.container.children.push(
             am5xy.XYChart.new(root, {
-                panX: false,     // 允許使用者透過滑鼠或觸控拖曳來水平移動（平移）圖表的繪圖區域（沿著 X 軸）
-                panY: false,     // 允許使用者透過滑鼠或觸控拖曳來垂直移動（平移）圖表的繪圖區域（沿著 Y 軸）
-                wheelX: 'panX', // 滾輪滾動時，圖表會沿著 X 軸平移
-                wheelY: 'zoomX',// 滾輪滾動時，圖表會沿著 Y 軸縮放
+                panX: false,      // 允許使用者透過滑鼠或觸控拖曳來水平移動（平移）圖表的繪圖區域（沿著 X 軸）
+                panY: false,      // 允許使用者透過滑鼠或觸控拖曳來垂直移動（平移）圖表的繪圖區域（沿著 Y 軸）
+                wheelX: 'panX',   // 滾輪滾動時，圖表會沿著 X 軸平移
+                wheelY: 'zoomX',  // 滾輪滾動時，圖表會沿著 Y 軸縮放
+                pinchZoomX: true,  // 允許使用者透過觸控手勢來縮放圖表（沿著 X 軸）
             })
         );
-
+        
         // Add cursor
         const cursor = chart.set("cursor", am5xy.XYCursor.new(root, {
           behavior: "zoomX"
@@ -108,9 +116,15 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
               return am5.Bullet.new(root, {
                 sprite: bulletCircle
               })
-            })            
+            }) 
+
             series.data.setAll(data);
 
+            series.fills.template.setAll({
+              fillOpacity: 0.2,
+              visible: true
+            });
+            
             // 向图例添加该系列
             legend.data.push(series);
 
@@ -137,7 +151,7 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
 
     return (
         <div>
-            <h3>{title}</h3>
+            {/* <h3>{title}</h3> */}
             <div ref={chartContainerRef} style={{ width: '100%', height: '450px', overflow: 'visible'  }}></div>
         </div>
     );
