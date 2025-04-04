@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import TelemetryChart from './component/TelemetryChart.js';
 
 class TelemetryChartWrapper extends HTMLElement {
@@ -8,14 +9,13 @@ class TelemetryChartWrapper extends HTMLElement {
     const title = this.getAttribute('title') ?? '';
     const seriesNames = (this.getAttribute('series-names') || '').split(',');
 
-    ReactDOM.render(
+    const root = createRoot(this); // 使用 createRoot 來創建 React 根
+    root.render(
       <TelemetryChart dataUrl={dataUrl} title={title} seriesNames={seriesNames} />,
-      this
     );
   }
 
   disconnectedCallback() {
-    ReactDOM.unmountComponentAtNode(this);
   }
 }
 
