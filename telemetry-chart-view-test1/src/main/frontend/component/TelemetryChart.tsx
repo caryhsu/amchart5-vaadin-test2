@@ -5,11 +5,12 @@ import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
 import React from 'react';
 
 interface TelemetryChartProps {
-    data: { timestamp: number; series1: number; series2: number; series3: number }[];
+    data: { timestamp: number; [key: string]: number }[]; // 允許任何 series 名稱
     title: string;
+    seriesNames: string[]; // 來自外部的 seriesNames prop
 }
 
-const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title }) => {
+const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title, seriesNames }) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -45,9 +46,10 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title }) => {
         );
 
         // 定义多个 series（3 条线）
-        const seriesNames = ['series1', 'series2', 'series3'];
-        const colors = [am5.color(0xff5733), am5.color(0x33ff57), am5.color(0x3357ff)];
+        // const seriesNames = ['series1', 'series2', 'series3'];
+        // const colors = [am5.color(0xff5733), am5.color(0x33ff57), am5.color(0x3357ff)];
 
+        // 使用外部传入的 seriesNames 创建多个 series
         seriesNames.forEach((seriesName, index) => {
             const series = chart.series.push(
                 am5xy.LineSeries.new(root, {
@@ -62,7 +64,7 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title }) => {
                 })
             );
 
-            series.set("stroke", colors[index]); // 设置颜色
+            // series.set("stroke", colors[index]); // 设置颜色
             series.data.setAll(data);
         });
 
@@ -70,7 +72,7 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title }) => {
         return () => {
             root.dispose();
         };
-    }, [data, title]);
+    }, [data, title, seriesNames]);
 
     return (
         <div>

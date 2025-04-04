@@ -15,6 +15,8 @@ const TelemetryView = () => {
         { timestamp: number; series1: number; series2: number; series3: number }[]
     >([]);
 
+    const [seriesNames, setSeriesNames] = useState<string[]>(['series1', 'series2', 'series3']); // 可以动态修改
+
     useEffect(() => {
         // 模拟数据，时间单位：毫秒（timestamp）
         setTelemetryData([
@@ -29,7 +31,8 @@ const TelemetryView = () => {
     return (
         <div>
             <h2>Telemetry Historical Records</h2>
-            <TelemetryChart data={telemetryData} title="Telemetry Data" />
+            {/* 将 seriesNames 传递给 TelemetryChart */}
+            <TelemetryChart data={telemetryData} title="Telemetry Data" seriesNames={seriesNames} />        
         </div>
     );
 
