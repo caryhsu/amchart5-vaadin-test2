@@ -27,13 +27,9 @@
       },
       {
         "route": "telemetry-view",
-        "menu": {
-          "order": 3,
-          "icon": "line-awesome/svg/chart-bar-solid.svg"
-        },
-        "title": "Telemetry Charts",
         "flowLayout": false,
-        "params": {}
+        "params": {},
+        "title": "Telemetry"
       }
     ]
   }

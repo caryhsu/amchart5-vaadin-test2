@@ -1,20 +1,36 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as am5xy from '@amcharts/amcharts5/xy';
 import * as am5 from '@amcharts/amcharts5';
 import am5themes_Animated from '@amcharts/amcharts5/themes/Animated';
 import React from 'react';
 
 interface TelemetryChartProps {
-    data: { timestamp: number; [key: string]: number }[]; // 允許任何 series 名稱
+    dataUrl: string;  // 用來指定資料來源的 URL
     title: string;
-    seriesNames: string[]; // 來自外部的 seriesNames prop
+    seriesNames: string[];  // 來自外部的 seriesNames prop
 }
 
-const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title, seriesNames }) => {
+const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesNames }) => {
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
+    const [data, setData] = useState<{ timestamp: number; [key: string]: number }[]>([]);
+
+    // 在 useEffect 中處理 fetch 資料
+    useEffect(() => {
+        if (!dataUrl) return;
+
+        // 假設資料是從後端 API URL 獲取的
+        fetch(dataUrl)
+            .then((response) => response.json())
+            .then((data) => {
+                setData(data);
+            })
+            .catch((error) => {
+                console.error('Error fetching telemetry data:', error);
+            });
+    }, [dataUrl]);
 
     useEffect(() => {
-        if (!chartContainerRef.current) return;
+        if (!chartContainerRef.current || data.length === 0) return;
 
         // 创建 amCharts 根对象
         const root = am5.Root.new(chartContainerRef.current);
@@ -45,12 +61,8 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title, seriesName
             })
         );
 
-        // 定义多个 series（3 条线）
-        // const seriesNames = ['series1', 'series2', 'series3'];
-        // const colors = [am5.color(0xff5733), am5.color(0x33ff57), am5.color(0x3357ff)];
-
         // 使用外部传入的 seriesNames 创建多个 series
-        seriesNames.forEach((seriesName, index) => {
+        seriesNames.forEach((seriesName) => {
             const series = chart.series.push(
                 am5xy.LineSeries.new(root, {
                     name: seriesName,
@@ -64,7 +76,6 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ data, title, seriesName
                 })
             );
 
-            // series.set("stroke", colors[index]); // 设置颜色
             series.data.setAll(data);
         });
 
