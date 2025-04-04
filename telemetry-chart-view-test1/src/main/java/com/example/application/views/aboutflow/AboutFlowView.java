@@ -18,6 +18,8 @@ public class AboutFlowView extends VerticalLayout {
     public AboutFlowView() {
         setSpacing(false);
 
+        add(new H2("About Flow (Java)"));
+        
         Image img = new Image("images/empty-plant.png", "placeholder plant");
         img.setWidth("200px");
         add(img);

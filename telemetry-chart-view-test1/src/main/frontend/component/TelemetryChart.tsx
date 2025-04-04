@@ -11,6 +11,8 @@ interface TelemetryChartProps {
 }
 
 const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesNames }) => {
+    console.log('TelemetryChart props:', { dataUrl, title, seriesNames });
+    
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const [data, setData] = useState<{ timestamp: number; [key: string]: number }[]>([]);
 

@@ -2,6 +2,7 @@ package com.example.application.views.helloflow;
 
 import com.vaadin.flow.component.Key;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.textfield.TextField;
@@ -19,6 +20,9 @@ public class HelloFlowView extends HorizontalLayout {
     private Button sayHello;
 
     public HelloFlowView() {
+
+        add(new H2("Hello Flow (Java)"));
+
         name = new TextField("Your name");
         sayHello = new Button("Say hello");
         sayHello.addClickListener(e -> {
