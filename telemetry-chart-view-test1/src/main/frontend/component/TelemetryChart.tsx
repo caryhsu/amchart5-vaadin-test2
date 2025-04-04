@@ -6,12 +6,18 @@ import React from 'react';
 
 interface TelemetryChartProps {
     dataUrl: string;  // 用來指定資料來源的 URL
-    title: string;
+    title?: string;
     seriesNames: string[];  // 來自外部的 seriesNames prop
+    showBullets?: boolean; // 是否顯示 bullet，預設 true    
 }
 
-const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesNames }) => {
-    console.log('TelemetryChart props:', { dataUrl, title, seriesNames });
+const TelemetryChart: React.FC<TelemetryChartProps> = ({ 
+    dataUrl, 
+    title, 
+    seriesNames,
+    showBullets = false, // 預設為 true
+ }) => {
+    console.log('TelemetryChart props:', { dataUrl, title, seriesNames, showBullets });
     
     const chartContainerRef = useRef<HTMLDivElement | null>(null);
     const [data, setData] = useState<{ timestamp: number; [key: string]: number }[]>([]);
@@ -39,12 +45,14 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
         
         root.setThemes([am5themes_Animated.new(root)]);
 
-        root.container.children.push(am5.Label.new(root, {
-          text: title,
-          fontSize: 20,
-          x: am5.percent(50),
-          centerX: am5.percent(50)
-        }));
+        if (title) {
+            root.container.children.push(am5.Label.new(root, {
+            text: title,
+            fontSize: 20,
+            x: am5.percent(50),
+            centerX: am5.percent(50)
+            }));
+        }
 
         // 创建折线图 (Line Chart)
         const chart = root.container.children.push(
@@ -63,6 +71,11 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
         }));
         cursor.lineY.set("visible", false);        
 
+        // 設定 DateFormatter
+        root.dateFormatter.setAll({
+            dateFormat: "yyyy-MM-dd"
+        });
+
         // 创建 X 轴 (时间轴)
         const xAxis = chart.xAxes.push(
             am5xy.DateAxis.new(root, {
@@ -71,8 +84,17 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
                   count: 1 
                 },
                 renderer: am5xy.AxisRendererX.new(root, {}),
+                tooltip: am5.Tooltip.new(root, {}),
+                // tooltip: am5.Tooltip.new(root, {
+                //     labelText: "--{timestamp.formatDate()}--:--{valueY}--",
+                // }),
             })
         );
+
+        // // 設定 X 軸的 tooltip（這是用於滑動顯示的 tooltip）
+        // xAxis.set("tooltip", am5.Tooltip.new(root, {
+        //     labelText: "{valueX.formatDate()}" // 使用內建格式化
+        // }));        
 
         // 创建 Y 轴 (数值轴)
         const yAxis = chart.yAxes.push(
@@ -109,16 +131,18 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
                 })
             );
 
-            // Actual bullet
-            series.bullets.push(function () {
-              var bulletCircle = am5.Circle.new(root, {
-                radius: 2,
-                fill: series.get("fill")
-              });
-              return am5.Bullet.new(root, {
-                sprite: bulletCircle
-              })
-            }) 
+            if (showBullets) {
+                // Actual bullet
+                series.bullets.push(function () {
+                var bulletCircle = am5.Circle.new(root, {
+                    radius: 2,
+                    fill: series.get("fill")
+                });
+                return am5.Bullet.new(root, {
+                    sprite: bulletCircle
+                })
+                }) 
+            }
 
             series.data.setAll(data);
 
@@ -126,7 +150,8 @@ const TelemetryChart: React.FC<TelemetryChartProps> = ({ dataUrl, title, seriesN
               fillOpacity: 0.2,
               visible: true
             });
-            
+
+
             // 向图例添加该系列
             legend.data.push(series);
 
