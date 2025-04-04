@@ -3,10 +3,9 @@ package com.example.application.views.component;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.Component;
 
 @Tag("telemetry-chart")
-@JsModule("./telemetry-chart.jsx")
+@JsModule("./telemetry-chart.tsx")
 public class TelemetryChartComponent extends Div {
 
     public void setDataUrl(String url) {
