@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Telemetry Chart with Spikes</title>
+  <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+  <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+    }
+    #chartdiv {
+      width: 100%;
+      height: 100vh;
+    }
+  </style>
+</head>
+<body>
+  <div id="chartdiv"></div>
+
+  <script>
+    am5.ready(function () {
+      const root = am5.Root.new("chartdiv");
+      root.setThemes([am5themes_Animated.new(root)]);
+
+      const chart = root.container.children.push(
+        am5xy.XYChart.new(root, {
+          panX: true,
+          panY: true,
+          wheelX: "panX",
+          wheelY: "zoomX",
+          layout: root.verticalLayout
+        })
+      );
+
+      const xAxis = chart.xAxes.push(
+        am5xy.DateAxis.new(root, {
+          maxDeviation: 0.1,
+          groupData: false,
+          baseInterval: { timeUnit: "second", count: 1 },
+          renderer: am5xy.AxisRendererX.new(root, {}),
+          tooltip: am5.Tooltip.new(root, {})
+        })
+      );
+
+      const yAxis = chart.yAxes.push(
+        am5xy.ValueAxis.new(root, {
+          renderer: am5xy.AxisRendererY.new(root, {})
+        })
+      );
+
+      const data = [];
+      const spikes = [];
+      const startTime = new Date().getTime();
+
+      for (let i = 0; i < 500; i++) {
+        const time = startTime + i * 1000;
+        const value = Math.sin(i * 0.1) * 10 + 50 + (Math.random() * 3 - 1.5);
+        data.push({ time, value });
+
+        if (value > 60) {
+          spikes.push({ time, value });
+        }
+      }
+
+      // 折線圖
+      const series = chart.series.push(
+        am5xy.LineSeries.new(root, {
+          name: "Telemetry",
+          xAxis,
+          yAxis,
+          valueXField: "time",
+          valueYField: "value",
+          stroke: am5.color(0x0077cc),
+          tooltip: am5.Tooltip.new(root, {
+            labelText: "{name}: {valueY}"
+          })
+        })
+      );
+      series.data.setAll(data);
+
+      // 紅點：突波點
+      const spikeSeries = chart.series.push(
+        am5xy.LineSeries.new(root, {
+          name: "Spike",
+          xAxis,
+          yAxis,
+          valueXField: "time",
+          valueYField: "value",
+          strokeOpacity: 0,
+          fillOpacity: 0,
+          tooltip: am5.Tooltip.new(root, {
+            labelText: "⚠️ Spike: {valueY}"
+          }),
+          bullet: function () {
+            return am5.Bullet.new(root, {
+              sprite: am5.Circle.new(root, {
+                radius: 5,
+                fill: am5.color(0xff0000),
+                tooltipY: 0
+              })
+            });
+          }
+        })
+      );
+      spikeSeries.data.setAll(spikes);
+      spikeSeries.set("groupDataDisabled", true); // 禁止壓縮這個 series
+
+      // 加上橫線警示線
+      spikes.forEach(spike => {
+        const range = yAxis.createAxisRange(
+          yAxis.makeDataItem({ value: spike.value })
+        );
+        range.get("grid").setAll({
+          stroke: am5.color(0xff0000),
+          strokeWidth: 1,
+          strokeDasharray: [4, 4]
+        });
+      });
+
+      chart.set("cursor", am5xy.XYCursor.new(root, {}));
+
+      const legend = chart.children.push(am5.Legend.new(root, {}));
+      legend.data.setAll(chart.series.values);
+
+      series.appear(1000);
+      chart.appear(1000, 100);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 5 動態資料載入範例</title>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none; /* 初始隱藏 */
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+<div id="chartdiv"></div>
+<div id="loading">正在載入資料...</div>
+
+<script>
+    // 防抖動 (Debounce) 函數
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+
+    // 初始化 amCharts 5
+    am5.ready(function() {
+        var root = am5.Root.new("chartdiv");
+
+        // 顯示載入指示器
+        function showLoading() {
+            document.getElementById("loading").style.display = "block";
+        }
+
+        // 隱藏載入指示器
+        function hideLoading() {
+            document.getElementById("loading").style.display = "none";
+        }
+
+        // 創建 XY 圖表
+        var chart = root.container.children.push(am5xy.XYChart.new(root, {
+            panX: true,
+            panY: false,
+            wheelX: "panX", // 修改 wheelX 行為以平移
+            wheelY: "zoomX", // 修改 wheelY 行為以縮放 X 軸
+            pinchZoomX: true // 啟用雙指縮放 X 軸
+        }));
+
+        // 設定 X 軸 (時間軸)
+        var xAxis = chart.xAxes.push(am5xy.DateAxis.new(root, {
+            maxDeviation: 0.1, // 稍微減小偏差，避免載入過多範圍外的數據
+            baseInterval: { timeUnit: "second", count: 1 },
+            renderer: am5xy.AxisRendererX.new(root, {
+                minGridDistance: 50 // X軸網格線最小間距
+            }),
+            tooltip: am5.Tooltip.new(root, {})
+        }));
+
+        // 設定 Y 軸 (值軸)
+        var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+            renderer: am5xy.AxisRendererY.new(root, {})
+        }));
+
+        // 創建資料系列
+        var series = chart.series.push(am5xy.LineSeries.new(root, {
+            name: "Telemetry Data",
+            xAxis: xAxis,
+            yAxis: yAxis,
+            valueYField: "value",
+            valueXField: "time",
+            tooltip: am5.Tooltip.new(root, {
+                labelText: "{valueY}"
+            }),
+            connect: false // 如果數據點可能不連續，設為 false
+        }));
+
+        // 創建滑動條 (水平滾動條) - 可選，但有助於導航
+        var scrollbarX = chart.set("scrollbarX", am5.Scrollbar.new(root, {
+            orientation: "horizontal"
+        }));
+
+        // 游標 - 主要用於顯示 Tooltip，平移由 chart.panX 控制
+        chart.set("cursor", am5xy.XYCursor.new(root, {
+             behavior: "zoomX", // 可以設為 zoomX 或其它，但平移主要由 chart 控制
+             xAxis: xAxis
+        }));
+
+        // --- 核心修改：監聽軸範圍變化 ---
+        // 使用 xAxis renderer 的 extremeschanged 事件，它通常在縮放或平移 *完成後* 觸發
+        // 並且我們對觸發函數進行防抖動處理
+        const debouncedFetch = debounce(function() {
+            // 從 xAxis 獲取當前實際顯示的最小和最大時間戳
+            // 注意: get("min") 和 get("max") 返回的是數值 (時間戳)
+            const minTime = lastMinTime;
+            const maxTime = lastMaxTime;
+
+            // 確保 minTime 和 maxTime 是有效的數字
+            if (typeof minTime === 'number' && typeof maxTime === 'number' && !isNaN(minTime) && !isNaN(maxTime) && minTime < maxTime) {
+                 console.log("Axis range changed (debounced), fetching for:", new Date(minTime), "to", new Date(maxTime));
+                 fetchTelemetryData(minTime, maxTime);
+            } else {
+                 console.warn("Invalid axis range:", minTime, maxTime);
+            }
+        }, 500); // 延遲 500 毫秒觸發
+
+
+    let lastMinTime = NaN;  // 儲存上次的有效 minTime
+    let lastMaxTime = NaN;  // 儲存上次的有效 maxTime
+    let isUpdating = false;  // 標記是否正在更新資料
+
+        // --- > Event listeners for Axis Range Changes < ---
+    // 使用 onPrivate 事件來監聽 selectionMin 和 selectionMax 的變化
+    xAxis.onPrivate("selectionMin", function(value, target) {
+        if (isUpdating) return; // 如果正在更新資料，則不處理
+        isUpdating = true;
+        lastMinTime = value;
+        debouncedFetch();
+        isUpdating = false;
+    });
+
+    xAxis.onPrivate("selectionMax", function(value, target) {
+        if (isUpdating) return; // 如果正在更新資料，則不處理
+        isUpdating = true;
+        lastMaxTime = value;
+        debouncedFetch();
+        isUpdating = false;
+    });
+        // --- > Event listeners end < ---
+
+        // 模擬一個從伺服器端拉取資料的函數
+        async function fetchTelemetryData(minTime, maxTime) {
+            showLoading(); // 顯示載入中提示
+            console.log("Fetching telemetry data from", new Date(minTime), "to", new Date(maxTime));
+
+            // --- 這是你需要修改的部分 ---
+            // 實際應用中，你應該使用 fetch API 或其他 AJAX 庫向你的後端發送請求
+            // 例如: const response = await fetch(`/api/telemetry?start=${minTime}&end=${maxTime}`);
+            //       const newData = await response.json();
+            // --- 模擬異步請求和新資料 ---
+            try {
+                // 模擬網路延遲
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                // 模擬從伺服器獲取到的新資料 (你需要替換成真實的 API 呼叫)
+                // 這裡我們根據新的時間範圍生成一些假資料
+                var newData = [];
+                // 注意：伺服器端應該返回 minTime 到 maxTime 之間的數據
+                // 為了演示，我們在客戶端模擬生成
+                // 確保時間戳是 number 型別
+                const timeStep = 1000; // 假設每秒一個數據點
+                let currentTime = Math.floor(minTime / timeStep) * timeStep; // 對齊到秒
+                let count = 0;
+                while (currentTime <= maxTime && count < 500) { // 限制最多點數避免卡頓
+                    newData.push({
+                        time: currentTime, // 確保是 number 型別的時間戳
+                        value: Math.sin(currentTime * 0.0001) * 15 + Math.random() * 5 + 40
+                    });
+                    currentTime += timeStep;
+                    count++;
+                }
+                console.log(`Workspaceed ${newData.length} data points.`);
+
+                // *** 使用獲取到的新資料更新圖表 ***
+                series.data.setAll(newData);
+
+            } catch (error) {
+                console.error("Error fetching telemetry data:", error);
+                // 在這裡可以添加錯誤處理邏輯，例如顯示錯誤訊息
+            } finally {
+                 hideLoading(); // 無論成功或失敗，都隱藏載入中提示
+            }
+             // --- 模擬結束 ---
+        }
+
+        // 載入初始資料 (可以載入預設範圍的資料)
+        const initialEndTime = new Date().getTime();
+        const initialStartTime = initialEndTime - 60 * 60 * 1000; // 載入過去一小時的資料
+
+        fetchTelemetryData(initialStartTime, initialEndTime);
+
+    }); // end am5.ready()
+</script>
+</body>
+</html>

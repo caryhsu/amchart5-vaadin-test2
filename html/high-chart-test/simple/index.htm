@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 引入 Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/scrollbar.js"></script>
+    <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<div style="margin: 10px;">
+    <button onclick="showAll()">顯示所有數據</button>
+    <button onclick="showLast1000()">顯示最後1000筆</button>
+</div>
+
+<script>
+// 模擬大量的 telemetry 資料
+let allData = [];
+
+// 假設這是大量的 telemetry 資料
+for (let i = 0; i < 100000; i++) {
+    allData.push([i * 1000, Math.sin(i / 1000) * 100]);
+}
+
+// 初始化 Highcharts 圖表
+let chart = Highcharts.chart('container', {
+    chart: {
+        type: 'line',
+        zoomType: 'x',  // 添加水平縮放功能
+        panning: true,
+        panKey: 'shift',
+        scrollablePlotArea: {
+            minWidth: 2000,  // 設置較大的最小寬度以確保可以滾動
+            scrollPositionX: 1  // 初始滾動位置
+        }
+    },
+    title: {
+        text: 'Telemetry Data with Lazy Loading'
+    },
+    xAxis: {
+        type: 'datetime',
+        title: {
+            text: 'Time'
+        }
+    },
+    yAxis: {
+        title: {
+            text: 'Telemetry Value'
+        }
+    },
+    series: [{
+        name: 'Telemetry Data',
+        data: allData.slice(0, 1000)  // 初始載入前1000筆數據
+    }]
+});
+
+// 顯示所有數據
+function showAll() {
+    chart.series[0].setData(allData, true);
+}
+
+// 顯示最後1000筆數據
+function showLast1000() {
+    chart.series[0].setData(allData.slice(-1000), true);
+}
+
+// 懶加載資料的函數
+function loadDataInRange(rangeStart, rangeEnd) {
+    let dataInRange = [];
+
+    // 過濾出範圍內的資料點
+    for (let i = 0; i < allData.length; i++) {
+        let timestamp = allData[i][0];
+        if (timestamp >= rangeStart && timestamp <= rangeEnd) {
+            dataInRange.push(allData[i]);
+        }
+    }
+
+    // 更新圖表資料
+    chart.series[0].setData(dataInRange, true); // `true` 表示刷新圖表
+}
+
+// 在 HTML 中添加重置按鈕
+</script>
+</body>
+</html>

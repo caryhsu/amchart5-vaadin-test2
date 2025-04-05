@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 引入 Highcharts -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+        <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<script>
+
+Highcharts.stockChart('container', {
+
+rangeSelector: {
+    buttons: [{
+        type: 'millisecond',
+        count: 10,
+        text: '10ms'
+    }, {
+        type: 'all',
+        text: 'All'
+    }],
+    buttonTheme: {
+        width: 50
+    },
+    inputDateFormat: '%Y/%j %H:%M:%S.%L',  // yyyy/DDD hh:mm:ss.SSS 格式
+    inputEditDateFormat: '%Y/%j %H:%M:%S.%L', // 顯示編輯時格式
+    inputDateParser: function (value) {
+        // 解析 yyyy/DDD hh:mm:ss.SSS 格式的日期
+        var match = value.match(/^(\d{4})\/(\d{3}) (\d{2}):(\d{2}):(\d{2})\.(\d{3})$/);
+        if (match) {
+            var year = parseInt(match[1], 10);
+            var dayOfYear = parseInt(match[2], 10);
+            var hours = parseInt(match[3], 10);
+            var minutes = parseInt(match[4], 10);
+            var seconds = parseInt(match[5], 10);
+            var milliseconds = parseInt(match[6], 10);
+
+            // 創建該年份的 1月1日
+            var date = new Date(year, 0);  
+            date.setDate(dayOfYear);  // 設定為年中的第幾天
+            date.setHours(hours, minutes, seconds, milliseconds);  // 設定時間
+            return date.getTime();  // 返回 timestamp
+        }
+        return Date.parse(value);  // 預設處理方法
+    }
+},
+
+title: {
+    text: 'Milliseconds in range selector inputs'
+},
+
+xAxis: {
+    tickPixelInterval: 120
+},
+
+series: [{
+    data: (function () {
+        // 生成帶時間戳的數據
+        const baseTime = new Date(2023, 0, 1).getTime(); // 2023年1月1日
+        return [
+            1, 4, 2, 5, 3, 6, 4, 4, 6, 6, 5, 5, 5, 6, 6, 5, 5, 4, 3, 3, 3, 4,
+            5, 5, 6, 6
+        ].map((value, index) => {
+            return [baseTime + index * 1000, value]; // 每個點間隔1秒
+        });
+    })(),
+    tooltip: {
+        valueDecimals: 2,
+        xDateFormat: '%Y/%j %H:%M:%S.%L'  // tooltip 中的日期格式
+    }
+}]
+});
+
+</script>
+</body>
+</html>

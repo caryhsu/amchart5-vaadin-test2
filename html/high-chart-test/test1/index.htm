@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetry History Data</title>
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<script>
+// 這裡替換成您的後端 API endpoint
+const dataURL = '/api/telemetry/history';
+
+function afterSetExtremes(e) {
+    const { chart } = e.target;
+    chart.showLoading('Loading data from server...');
+    
+    fetch(`${dataURL}?start=${Math.round(e.min)}&end=${Math.round(e.max)}`)
+        .then(res => res.ok && res.json())
+        .then(data => {
+            // 將數據轉換為 candlestick 格式：[timestamp, open, high, low, close]
+            const candleData = data.avgData.map((point, index) => [
+                point[0], // timestamp
+                point[1], // open (average)
+                data.maxData[index][1], // high
+                data.minData[index][1], // low
+                point[1]  // close (average)
+            ]);
+            chart.series[0].setData(candleData);
+            chart.hideLoading();
+        }).catch(error => console.error(error.message));
+}
+
+// 初始加載數據
+fetch(dataURL)
+    .then(res => res.ok && res.json())
+    .then(data => {
+        // 將數據轉換為 candlestick 格式
+        const candleData = data.avgData.map((point, index) => [
+            point[0], // timestamp
+            point[1], // open (average)
+            data.maxData[index][1], // high
+            data.minData[index][1], // low
+            point[1]  // close (average)
+        ]);
+
+        Highcharts.stockChart('container', {
+            chart: {
+                type: 'candlestick',
+                zooming: {
+                    type: 'x'
+                }
+            },
+
+            navigator: {
+                adaptToUpdatedData: false,
+                series: {
+                    data: data.avgData // 使用平均值作為導航器的數據
+                }
+            },
+
+            scrollbar: {
+                liveRedraw: false
+            },
+
+            title: {
+                text: 'Telemetry History Data',
+                align: 'left'
+            },
+
+            rangeSelector: {
+                buttons: [{
+                    type: 'hour',
+                    count: 1,
+                    text: '1h'
+                }, {
+                    type: 'day',
+                    count: 1,
+                    text: '1d'
+                }, {
+                    type: 'week',
+                    count: 1,
+                    text: '1w'
+                }, {
+                    type: 'month',
+                    count: 1,
+                    text: '1m'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                selected: 4
+            },
+
+            xAxis: {
+                events: {
+                    afterSetExtremes: afterSetExtremes
+                },
+                minRange: 3600 * 1000 // 最小範圍為1小時
+            },
+
+            yAxis: {
+                floor: 0
+            },
+
+            series: [{
+                name: 'Average',
+                data: data.avgData,
+                type: 'line',
+                color: '#7cb5ec',
+                zIndex: 2
+            }, {
+                name: 'Maximum',
+                data: data.maxData,
+                type: 'line',
+                color: '#90ed7d',
+                zIndex: 1
+            }, {
+                name: 'Minimum',
+                data: data.minData,
+                type: 'line',
+                color: '#f7a35c',
+                zIndex: 1
+            }]
+        });
+    }).catch(error => console.error(error.message));
+</script>
+</body>
+</html>

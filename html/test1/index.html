@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 5 - RangeSeries 範例</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        #chartdiv {
+            width: 100%;
+            height: 500px; /* 設定圖表容器的高度 */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>amCharts 5 RangeSeries 範例</h1>
+    <p>這個圖表展示了每個類別的數值範圍。</p>
+
+    <div id="chartdiv"></div>
+
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+
+    <script>
+        // 確保所有 amCharts 相關程式碼都在 am5.ready 內部
+        am5.ready(function() {
+
+            // ... (之前的 Root, Theme, Chart, Data, Axes 創建代碼) ...
+            // (代碼 1 到 5 步驟)
+
+            var root = am5.Root.new("chartdiv");
+            root.setThemes([ am5themes_Animated.new(root) ]);
+            var chart = root.container.children.push(am5xy.XYChart.new(root, { /* ... */ }));
+            var data = [ /* ... */ ];
+            var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root, { /* ... */ }));
+            xAxis.data.setAll(data);
+            var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, { /* ... */ }));
+
+            // (代碼 6 步驟 - 創建 Series)
+            var series = chart.series.push(am5xy.RangeSeries.new(root, {
+                name: "數值範圍",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "highValue",
+                openValueYField: "lowValue",
+                categoryXField: "category",
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "[bold]{categoryX}[/]\n範圍: {openValueY} - {valueY}"
+                })
+            }));
+
+            // (代碼 7 步驟 - 設定 Series 外觀)
+            series.columns.template.setAll({
+                width: am5.percent(80),
+                strokeOpacity: 0,
+            });
+             series.columns.template.adapters.add("fill", function(fill, target) {
+              if (target.dataItem && target.dataItem.dataContext.color) {
+                return target.dataItem.dataContext.color;
+              }
+              return fill;
+            });
+            series.data.setAll(data);
+
+            // (代碼 8 步驟 - 添加 Legend)
+            // --------------------------------------------------
+            // 錯誤發生在這行 (或附近)，檢查 am5.Legend 是否已定義
+            // 可以在這行之前加入 console.log(am5.Legend); 來調試
+            // --------------------------------------------------
+            console.log("檢查 am5.Legend:", am5.Legend); // <--- 加入這行來調試
+            var legend = chart.children.push(am5.Legend.new(root, { // <--- 原來的 Line 92 (或附近)
+                centerX: am5.p50,
+                x: am5.p50
+            }));
+            legend.data.setAll(chart.series.values);
+
+            // (代碼 9 步驟 - 添加 Cursor)
+            chart.set("cursor", am5xy.XYCursor.new(root, { /* ... */ }));
+
+            // (代碼 10 步驟 - 動畫)
+            series.appear(1000);
+            chart.appear(1000, 100);
+
+        }); // end am5.ready()
+    </script>
+
+</body>
+</html>

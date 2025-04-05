@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 引入 Highcharts -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+        <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div>
+    <h2>AAPL Stock Price</h2>
+    <p>Demo of placing the range selector above the navigator</p>
+    <button onclick="setRange('1h')">最近1小時</button>
+    <button onclick="setRange('2h')">最近2小時</button>
+    <button onclick="setRange('1d')">最近1天</button>
+</div>
+<div id="container"></div>
+<script>
+(async () => {
+    // Load the dataset
+    const data = await fetch(
+        'https://demo-live-data.highcharts.com/aapl-c.json'
+    ).then(response => response.json());
+
+    // 建立全域變數存放圖表實例
+    let chart;
+
+    // 時間範圍控制函數
+    window.setRange = function(range) {
+        if (!chart) return;
+        
+        const now = 1693315800000; // 直接使用時間戳，不需要 new Date()
+        let from;
+
+        // 保存 navigator 的範圍
+        const navigator = chart.navigator;
+        const navigatorExtremes = {
+            min: navigator.xAxis.min,
+            max: navigator.xAxis.max
+        };
+
+        switch(range) {
+            case '1h':
+                from = now - (3600 * 1000);
+                break;
+            case '2h':
+                from = now - (2 * 3600 * 1000);
+                break;
+            case '1d':
+                from = now - (24 * 3600 * 1000);
+                break;
+        }
+
+        // 更新主圖表的可視區域
+        chart.xAxis[0].setExtremes(from, now, false); // 添加 false 參數避免自動重繪
+        
+        // 恢復 navigator 的範圍
+        navigator.xAxis.setExtremes(navigatorExtremes.min, navigatorExtremes.max, true); // 最後一次更新時重繪
+    };
+
+    // Create the chart
+    chart = Highcharts.stockChart('container', {
+        // title 和 subtitle 配置已移除
+        
+        rangeSelector: {
+            enabled: false  // 關閉內建的 rangeSelector
+        },
+
+        navigator: {
+            margin: 60
+        },
+
+        series: [{
+            name: 'AAPL',
+            data: data,
+            tooltip: {
+                valueDecimals: 2
+            }
+        }]
+    });
+})(); 
+</script>
+</body>
+</html>

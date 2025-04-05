@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 5 - 500k Data Points</title>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+</head>
+<body>
+    <div id="chartdiv" style="width: 100%; height: 500px;"></div>
+
+    <script>
+        // Generate data similar to the Highcharts example
+        function getData(n) {
+            const arr = [];
+            let i, x, a, b, c, spike;
+            for (i = 0, x = Date.UTC(new Date().getUTCFullYear(), 0, 1) - n * 36e5; i < n; i = i + 1, x = x + 36e5) {
+                if (i % 100 === 0) {
+                    a = 2 * Math.random();
+                }
+                if (i % 1000 === 0) {
+                    b = 2 * Math.random();
+                }
+                if (i % 10000 === 0) {
+                    c = 2 * Math.random();
+                }
+                if (i % 50000 === 0) {
+                    spike = 10;
+                } else {
+                    spike = 0;
+                }
+                arr.push({
+                    date: x,
+                    value: 2 * Math.sin(i / 100) + a + b + c + spike + Math.random()
+                });
+            }
+            return arr;
+        }
+
+        const n = 500000;
+        const data = getData(n);
+
+        // Set up amCharts 5 chart
+        am5.ready(function() {
+            // Create root element
+            const root = am5.Root.new("chartdiv");
+
+            // Set themes
+            root.setThemes([
+                am5themes_Animated.new(root)
+            ]);
+
+            // Create XY chart
+            const chart = root.container.children.push(am5xy.XYChart.new(root, {
+                panX: true,
+                panY: true,
+                wheelX: "pan",
+                wheelY: "zoom"
+            }));
+
+            // Create axes
+            const xAxis = chart.xAxes.push(am5xy.DateAxis.new(root, {
+                baseInterval: { timeUnit: "minute", count: 1 },
+                renderer: am5xy.AxisRendererX.new(root, {})
+            }));
+
+            const yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root, {
+                renderer: am5xy.AxisRendererY.new(root, {}),
+                tooltip: am5.Tooltip.new(root, {})
+            }));
+
+            // Create series
+            const series = chart.series.push(am5xy.LineSeries.new(root, {
+                name: "Hourly data points",
+                xAxis: xAxis,
+                yAxis: yAxis,
+                valueYField: "value",
+                valueXField: "date",
+                strokeWidth: 1,
+                tooltip: am5.Tooltip.new(root, {
+                    labelText: "{valueY}"
+                })
+            }));
+
+            // Add data
+            series.data.setAll(data);
+
+            // Optional: You can adjust chart settings like zooming or styling as needed
+        });
+    </script>
+</body>
+</html>

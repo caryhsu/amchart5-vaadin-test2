@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 修改 Highcharts 引入 -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/data.js"></script>
+    <script src="https://code.highcharts.com/highcharts-more.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+    
+
+        <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+
+<div id="container"></div>
+<script>
+
+// https://veret.gfi.uib.no/
+
+Highcharts.stockChart('container', {
+    data: {
+        csvURL: 'https://cdn.jsdelivr.net/gh/highcharts/highcharts@b99fc27c/samples/data/temp-florida-bergen-2023.csv',
+        beforeParse: function (csv) {
+            return csv.replace(/\n\n/g, '\n');
+        }
+    },
+    chart: {
+        type: 'arearange',
+        zooming: {
+            type: 'x'
+        }
+    },
+    
+    // 添加 scrollbar 設置
+    scrollbar: {
+        enabled: true
+    },
+
+    // 添加 navigator 設置
+    navigator: {
+        enabled: true,
+        height: 30
+    },
+
+    title: {
+        text: 'Temperature variation by day',
+        align: 'left'
+    },
+    subtitle: {
+        text: 'Source: ' +
+            '<a href="https://veret.gfi.uib.no/"' +
+            'target="_blank">Universitetet i Bergen</a>',
+        align: 'left'
+    },
+    xAxis: {
+        type: 'datetime',
+        accessibility: {
+            rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
+        }
+    },
+    yAxis: {
+        title: {
+            text: null
+        }
+    },
+    tooltip: {
+        crosshairs: true,
+        shared: true,
+        valueSuffix: '°C',
+        xDateFormat: '%A, %b %e'
+    },
+    legend: {
+        enabled: false
+    },
+    series: [{
+        name: 'Temperatures'
+    }]
+});
+</script>
+</body>
+</html>

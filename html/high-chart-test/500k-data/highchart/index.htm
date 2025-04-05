@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 引入 Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+
+<script>
+// 模擬大量的 telemetry 資料
+let allData = [];
+
+// 假設這是大量的 telemetry 資料，時間戳應該是 UNIX 時間戳 (毫秒)
+for (let i = 0; i < 100000; i++) {
+    let timestamp = Date.UTC(2020, 0, 1) + i * 1000; // 每秒一個資料點
+    let value = Math.sin(i / 1000) * 100;  // 隨機數值
+    allData.push([timestamp, value]);  // [時間戳, 資料]
+}
+
+// 初始化 Highcharts 圖表
+let chart = Highcharts.chart('container', {
+    chart: {
+        type: 'line',
+        events: {
+            // 當縮放區域發生變化時觸發
+            selection: function (e) {
+                let rangeStart = e.xAxis[0].min;
+                let rangeEnd = e.xAxis[0].max;
+
+                // 呼叫懶加載資料函數
+                loadDataInRange(rangeStart, rangeEnd);
+                return false; // 防止 Highcharts 自動重新渲染
+            }
+        }
+    },
+    title: {
+        text: 'Telemetry Data with Lazy Loading'
+    },
+    xAxis: {
+        type: 'datetime',
+        title: {
+            text: 'Time'
+        }
+    },
+    yAxis: {
+        title: {
+            text: 'Telemetry Value'
+        }
+    },
+    series: [{
+        name: 'Telemetry Data',
+        data: []  // 初始為空，懶加載資料後更新
+    }]
+});
+
+// 懶加載資料的函數
+function loadDataInRange(rangeStart, rangeEnd) {
+    let dataInRange = [];
+
+    // 過濾出範圍內的資料點
+    for (let i = 0; i < allData.length; i++) {
+        let timestamp = allData[i][0];
+        if (timestamp >= rangeStart && timestamp <= rangeEnd) {
+            dataInRange.push(allData[i]);
+        }
+    }
+
+    // 更新圖表資料
+    chart.series[0].setData(dataInRange, true); // `true` 表示刷新圖表
+}
+
+// 初次加載時加載資料
+loadDataInRange(Date.UTC(2020, 0, 1), Date.UTC(2020, 0, 1) + 100000 * 1000); // 初始範圍：2020 年 1 月 1 日起
+</script>
+
+</body>
+</html>
