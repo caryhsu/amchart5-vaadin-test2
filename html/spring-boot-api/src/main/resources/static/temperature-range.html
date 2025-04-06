@@ -11,10 +11,7 @@
     <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/stock/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
-
-    
-
-        <style>
+    <style>
         #container {
             height: 400px;
             width: 100%;
@@ -35,9 +32,11 @@ Highcharts.stockChart('container', {
         events: {
             load: function() {
                 const chart = this;
+                // 先加載主圖表數據
                 fetch('/api/temperature/json?from=1&to=3')
                     .then(response => response.json())
                     .then(data => {
+                        // 設置主圖表數據
                         chart.series[0].setData(data.helsinki);
                         chart.series[1].setData(data.turku);
                     });
@@ -57,18 +56,14 @@ Highcharts.stockChart('container', {
     },
     navigator: {
         enabled: true,
-        height: 30,
-        series: [{
-            name: 'Helsinki',
-            type: 'arearange',
-            fillColor: 'rgba(102,133,194,0.3)',
-            color: '#4572A7'
-        }, {
-            name: 'Turku',
-            type: 'arearange',
-            fillColor: 'rgba(194,102,133,0.3)',
-            color: '#A74572'
-        }]
+        height: 50,
+        series: {
+            type: 'areaspline',
+            lineWidth: 1
+        },
+        marker: {
+            enabled: false
+        }
     },
     title: {
         text: 'Temperature variation by day',
@@ -105,9 +100,11 @@ Highcharts.stockChart('container', {
     },
     series: [{
         name: 'Helsinki',
+        showInNavigator: true,
         type: 'arearange'
     }, {
         name: 'Turku',
+        showInNavigator: true,
         type: 'arearange'
     }]
 });

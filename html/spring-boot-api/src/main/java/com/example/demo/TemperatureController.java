@@ -6,6 +6,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -58,5 +61,39 @@ public class TemperatureController {
         }
     }
 
+    @GetMapping("/navigator")
+    public ResponseEntity<Map<String, List<List<Number>>>> getNavigatorData() {
+        try {
+            ClassPathResource resource = new ClassPathResource("temperature-t.json");
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, List<List<Number>>> fullData = mapper.readValue(resource.getInputStream(), 
+                new TypeReference<Map<String, List<List<Number>>>>() {});
+            
+            Map<String, List<List<Number>>> navigatorData = new HashMap<>();
+            navigatorData.put("helsinki", new ArrayList<>());
+            navigatorData.put("turku", new ArrayList<>());
+    
+            // 計算平均溫度
+            for (List<List<Number>> cityData : fullData.values()) {
+                String cityName = fullData.entrySet()
+                    .stream()
+                    .filter(entry -> entry.getValue() == cityData)
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .get();
+    
+                for (List<Number> point : cityData) {
+                    long timestamp = point.get(0).longValue();
+                    double avgTemp = (point.get(1).doubleValue() + point.get(2).doubleValue()) / 2;
+                    navigatorData.get(cityName).add(List.of(timestamp, avgTemp));
+                }
+            }
+    
+            return ResponseEntity.ok(navigatorData);
+    
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
 }
 
