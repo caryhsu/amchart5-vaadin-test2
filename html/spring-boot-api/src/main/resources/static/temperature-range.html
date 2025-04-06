@@ -30,14 +30,19 @@ function loadData(chart, from, to) {
         return;
     }
 	
-    const mainSeries = [chart.series[0], chart.series[1]];
+    const mainSeries = chart.series.filter(series => 
+        series.options.showInNavigator !== false && 
+        !series.navigatorSeries && 
+        series.visible &&
+        !series.name.includes("Navigator")  // 排除名稱中包含 "Navigator" 的系列
+    );
     
     // 構建 URL，只有在參數存在時才添加
     const buildUrl = (seriesName) => {
         let url = `/api/temperature/${seriesName}/json`;
         const params = [];
-        if (from !== undefined) params.push(`from=${from}`);
-        if (to !== undefined) params.push(`to=${to}`);
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
         return params.length ? `${url}?${params.join('&')}` : url;
     };
 
@@ -88,6 +93,7 @@ Highcharts.stockChart('container', {
         },
         events: {
             load: function() {
+                
                 const chart = this;
                 // 先載入完整數據給 navigator
                 Promise.all([
