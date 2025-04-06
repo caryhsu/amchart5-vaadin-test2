@@ -23,6 +23,39 @@
 <div>aa</div>
 <div id="container"></div>
 <script>
+// 添加在 Highcharts.stockChart 之前
+function loadData(chart, from, to) {
+    const mainSeries = [chart.series[0], chart.series[1]];
+    
+    // 構建 URL，只有在參數存在時才添加
+    const buildUrl = (seriesName) => {
+        let url = `/api/temperature/${seriesName}/json`;
+        const params = [];
+        if (from !== undefined) params.push(`from=${from}`);
+        if (to !== undefined) params.push(`to=${to}`);
+        return params.length ? `${url}?${params.join('&')}` : url;
+    };
+
+    Promise.all(mainSeries.map(series => {
+        const url = buildUrl(series.name);
+        console.log(`Fetching data from: ${url}`);
+        return fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(`Data for ${series.name}:`, data);
+                series.setData(data);
+            })
+            .catch(error => {
+                console.error(`Error loading data for ${series.name}:`, error);
+            })
+    }));
+}
+
 Highcharts.stockChart('container', {
     chart: {
         type: 'arearange',
@@ -32,14 +65,8 @@ Highcharts.stockChart('container', {
         events: {
             load: function() {
                 const chart = this;
-                // 先加載主圖表數據
-                fetch('/api/temperature/json?from=1&to=3')
-                    .then(response => response.json())
-                    .then(data => {
-                        // 設置主圖表數據
-                        chart.series[0].setData(data.helsinki);
-                        chart.series[1].setData(data.turku);
-                    });
+                // 初始加載數據
+                loadData(chart);
             }
         }
     },
@@ -52,11 +79,13 @@ Highcharts.stockChart('container', {
         }
     },
     scrollbar: {
-        enabled: true
+        enabled: true,
+        liveRedraw: false
     },
     navigator: {
         enabled: true,
         height: 50,
+        adaptToUpdatedData: false,
         series: {
             type: 'areaspline',
             lineWidth: 1
@@ -65,20 +94,19 @@ Highcharts.stockChart('container', {
             enabled: false
         }
     },
-    title: {
-        text: 'Temperature variation by day',
-        align: 'left'
-    },
-    subtitle: {
-        text: 'Source: ' +
-            '<a href="https://veret.gfi.uib.no/"' +
-            'target="_blank">Universitetet i Bergen</a>',
-        align: 'left'
-    },
+    
     xAxis: {
         type: 'datetime',
+        minRange: 3600 * 1000,
         accessibility: {
             rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
+        },
+        events: {
+            afterSetExtremes: function(e) {
+                console.log("xAxis.afterSetExtremes", e.min, e.max);
+                const chart = this.chart;
+                loadData(chart, e.min, e.max);
+            }
         }
     },
     yAxis: {

@@ -15,8 +15,8 @@ import java.util.Objects;
 public class TemperatureJsonConverter {
     public static void main(String[] args) {
         Map<String, List<List<Number>>> result = new HashMap<>();
-        result.put("helsinki", new ArrayList<>());
-        result.put("turku", new ArrayList<>());
+        result.put("Helsinki", new ArrayList<>());
+        result.put("Turku", new ArrayList<>());
 
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(Objects.requireNonNull(TemperatureJsonConverter.class.getResourceAsStream("/temperature.csv"))))) {
             String header = reader.readLine(); // 讀欄位名稱
@@ -43,10 +43,10 @@ public class TemperatureJsonConverter {
                         .toEpochMilli();
 
                 // 添加 Helsinki 數據
-                result.get("helsinki").add(List.of(timestamp, series1_min, series1_max));
+                result.get("Helsinki").add(List.of(timestamp, series1_min, series1_max));
 
                 // 添加 Turku 數據
-                result.get("turku").add(List.of(timestamp, series2_min, series2_max));
+                result.get("Turku").add(List.of(timestamp, series2_min, series2_max));
             }
 
             // 將結果寫入 JSON 文件

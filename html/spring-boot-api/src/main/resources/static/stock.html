@@ -100,7 +100,10 @@ fetch(dataURL)
 
             xAxis: {
                 events: {
-                    afterSetExtremes: afterSetExtremes
+                    afterSetExtremes: function(e) {
+                        console.log("xAxis.afterSetExtremes");
+                        afterSetExtremes(e);
+                    } 
                 },
                 minRange: 3600 * 1000 // one hour
             },
