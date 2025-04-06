@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>amCharts 5 動態資料載入範例</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+        <style>
+        #chartdiv {
+            width: 100%;
+            height: 500px;
+        }
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none; /* 初始隱藏 */
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+<div id="container"></div>
+<div id="loading">正在載入資料...</div>
+
+<script>
+// Data retrieved from https://www.ssb.no/statbank/table/10467/
+Highcharts.chart('container', {
+    chart: {
+        type: 'area'
+    },
+    title: {
+        text: 'Born persons, by boys\' name'
+    },
+    subtitle: {
+        text: '* Missing data for Yasin in 2019',
+        align: 'right',
+        verticalAlign: 'bottom'
+    },
+    legend: {
+        layout: 'vertical',
+        align: 'left',
+        verticalAlign: 'top',
+        x: 150,
+        y: 60,
+        floating: true,
+        borderWidth: 1,
+        backgroundColor:
+            Highcharts.defaultOptions.legend.backgroundColor || '#FFFFFF'
+    },
+    yAxis: {
+        title: {
+            text: 'Amount'
+        }
+    },
+    plotOptions: {
+        series: {
+            pointStart: 2016
+        },
+        area: {
+            fillOpacity: 0.5
+        }
+    },
+    credits: {
+        enabled: false
+    },
+    
+    series: [{
+        name: 'Arvid',
+        data: [
+            { x: Date.UTC(2016, 0, 1), y: 11 },
+            { x: Date.UTC(2017, 0, 1), y: 11 },
+            { x: Date.UTC(2018, 0, 1), y: 8 },
+            { x: Date.UTC(2019, 0, 1), y: 13 },
+            { x: Date.UTC(2020, 0, 1), y: 12 },
+            { x: Date.UTC(2021, 0, 1), y: 14 },
+            { x: Date.UTC(2022, 0, 1), y: 4 },
+            { x: Date.UTC(2023, 0, 1), y: 12 }
+        ]
+    }, {
+        name: 'Yasin',
+        data: [
+            { x: Date.UTC(2016, 0, 1), y: 10 },
+            { x: Date.UTC(2017, 0, 1), y: 10 },
+            { x: Date.UTC(2018, 0, 1), y: 8 },
+            { x: Date.UTC(2019, 0, 1), y: null },
+            { x: Date.UTC(2020, 0, 1), y: 8 },
+            { x: Date.UTC(2021, 0, 1), y: 6 },
+            { x: Date.UTC(2022, 0, 1), y: 4 },
+            { x: Date.UTC(2023, 0, 1), y: 8 }
+        ]
+    }]
+});
+ // end am5.ready()
+</script>
+</body>
+</html>

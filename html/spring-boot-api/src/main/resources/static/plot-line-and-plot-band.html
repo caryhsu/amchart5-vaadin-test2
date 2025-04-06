@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 修改 Highcharts 引入 -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/sonification.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+
+        <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+
+<div id="container"></div>
+<script>
+
+const chart = Highcharts.chart('container', {
+    title: {
+        text: 'Helsinki Average Monthly Temperature',
+        align: 'left',
+        margin: 25
+    },
+
+    yAxis: {
+        plotLines: [{
+            value: 0,
+            color: '#59D',
+            dashStyle: 'shortDash',
+            width: 2,
+            label: {
+                text: '冰点',
+                align: 'right',
+                style: {
+                    color: '#59D'
+                },
+                // 添加 tooltip 效果
+                useHTML: true,
+                formatter: function() {
+                    return '<div style="padding: 5px; background-color: white; border: 1px solid #59D;">' +
+                           '这是冰点线 (0°C)' +
+                           '</div>';
+                }
+            },
+            // 添加事件处理
+            events: {
+                click: function() {
+                    alert('点击了 y 轴 0 度线');
+                },
+                mouseover: function() {
+                    this.svgElem.attr({
+                        stroke: '#FF0000',  // 鼠标悬停时改变颜色
+                        'stroke-width': 4   // 鼠标悬停时改变线宽
+                    });
+                },
+                mouseout: function() {
+                    this.svgElem.attr({
+                        stroke: '#59D',     // 恢复原来的颜色
+                        'stroke-width': 2   // 恢复原来的线宽
+                    });
+                }
+            }
+        }],
+        title: {
+            enabled: false
+        },
+        labels: {
+            format: '{text}°C'
+        },
+        gridLineWidth: 0
+    },
+
+    xAxis: {
+        type: 'datetime',  // 改为时间类型
+        plotBands: [{
+            from: Date.UTC(2023, 3, 1),  // 4月1日
+            to: Date.UTC(2023, 8, 1),    // 9月1日
+            color: '#EEFFF4',
+            label: {
+                text: 'Summer',
+                align: 'left',
+                x: 10,
+                // 添加 tooltip 效果
+                useHTML: true,
+                formatter: function() {
+                    return '<div style="padding: 5px; background-color: white; border: 1px solid #4EA291;">' +
+                           '夏季时期：4月至9月' +
+                           '<br>平均温度较高' +
+                           '</div>';
+                }
+            },
+            events: {
+                click: function() {
+                    alert('点击了夏季区域');
+                },
+                mouseover: function() {
+                    this.svgElem.attr({
+                        fill: '#CCFFE4'  // 鼠标悬停时改变背景色
+                    });
+                },
+                mouseout: function() {
+                    this.svgElem.attr({
+                        fill: '#EEFFF4'  // 恢复原来的背景色
+                    });
+                }
+            }
+        }],
+        plotLines: [{
+            value: Date.UTC(2023, 3, 1),  // 4月1日
+            color: '#4EA291',
+            width: 3
+        }, {
+            value: Date.UTC(2023, 8, 1),  // 9月1日
+            color: '#4EA291',
+            width: 3
+        }],
+        crosshair: true
+    },
+
+    legend: {
+        enabled: false
+    },
+
+    tooltip: {
+        valueSuffix: '°C'
+    },
+
+    series: [{
+        name: 'Helsinki',
+        data: [
+            [Date.UTC(2023, 0, 1), -5],  // 1月
+            [Date.UTC(2023, 1, 1), -6],  // 2月
+            [Date.UTC(2023, 2, 1), -2],  // 3月
+            [Date.UTC(2023, 3, 1), 4],   // 4月
+            [Date.UTC(2023, 4, 1), 10],  // 5月
+            [Date.UTC(2023, 5, 1), 14],  // 6月
+            [Date.UTC(2023, 6, 1), 17],  // 7月
+            [Date.UTC(2023, 7, 1), 15],  // 8月
+            [Date.UTC(2023, 8, 1), 10],  // 9月
+            [Date.UTC(2023, 9, 1), 6],   // 10月
+            [Date.UTC(2023, 10, 1), 0],  // 11月
+            [Date.UTC(2023, 11, 1), -4]  // 12月
+        ],
+        color: '#2F2D2E'
+    }]
+});
+
+document.getElementById('sonify').onclick = function () {
+    chart.toggleSonify();
+};
+
+
+</script>
+</body>
+</html>

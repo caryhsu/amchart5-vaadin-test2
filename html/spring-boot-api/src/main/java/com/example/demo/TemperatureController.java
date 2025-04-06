@@ -18,23 +18,10 @@ import java.util.Map;
 @RequestMapping("/api/temperature")
 public class TemperatureController {
 
-    // read from src/main/resources/tempature.csv
-    // return the csv data to client
-    @GetMapping()
-    public ResponseEntity<byte[]> getTemperatures(
+    @GetMapping("/csv")
+    public ResponseEntity<byte[]> getTemperatures_Csv(
             @RequestParam("from") long from,
             @RequestParam("to") long to) {
-
-        // List<Map<String, Object>> data = new ArrayList<>();
-        // long step = 1000; // 每秒一筆
-        // for (long t = from; t <= to; t += step) {
-        //     double value = 50 + Math.sin(t / 10000.0) * 10 + Math.random();
-        //     Map<String, Object> point = new HashMap<>();
-        //     point.put("time", t);
-        //     point.put("value", value);
-        //     data.add(point);
-        // }
-        // return data;
 
         try {
             ClassPathResource resource = new ClassPathResource("temperature-t.csv");
@@ -50,5 +37,26 @@ public class TemperatureController {
             return ResponseEntity.internalServerError().body(("Error reading CSV: " + e.getMessage()).getBytes());
         }
     }
+
+    @GetMapping("/json")
+    public ResponseEntity<byte[]> getTemperatures_Json(
+            @RequestParam("from") long from,
+            @RequestParam("to") long to) {
+
+        try {
+            ClassPathResource resource = new ClassPathResource("temperature-t.json");
+            InputStream inputStream = resource.getInputStream();
+            byte[] jsonBytes = inputStream.readAllBytes();
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.json\"")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(jsonBytes);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(("Error reading JSON: " + e.getMessage()).getBytes());
+        }
+    }
+
 }
 
