@@ -34,7 +34,7 @@ function loadData(chart, from, to) {
         series.options.showInNavigator !== false && 
         !series.navigatorSeries && 
         series.visible &&
-        !series.name.includes("Navigator")  // 排除名稱中包含 "Navigator" 的系列
+        !series.name.includes("Nav")  // 排除名稱中包含 "Nav" 的系列
     );
     
     // 構建 URL，只有在參數存在時才添加
