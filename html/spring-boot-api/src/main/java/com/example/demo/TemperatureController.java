@@ -92,12 +92,22 @@ public class TemperatureController {
                 Duration duration = Duration.between(fromInstant, toInstant);
                 long days = duration.toDays();
                 long hours = duration.toHours() % 24;
-                if (days < 30 * 6 && days > 7) {
+                if (days < 30 * 6 && days > 14) {
+                    // 內差法每兩小時一筆
+                    long step = 2 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 7) {
                     // 內差法每小時一筆
                     long step = 60 * 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
-                else if (days <= 7 && hours > 7) {
+                else if (hours > 30) {
+                    // 內差法每五分鐘一筆
+                    long step = 5 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (hours > 7) {
                     // 內差法每分鐘一筆
                     long step = 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
@@ -152,8 +162,8 @@ public class TemperatureController {
     //     } catch (Exception e) {
     //         return ResponseEntity.internalServerError().build();
     //     }
+    
     // }
-
 private List<List<Number>> interpolateData(List<List<Number>> originalData, long start, long end, long step) {
         List<List<Number>> result = new ArrayList<>();
         

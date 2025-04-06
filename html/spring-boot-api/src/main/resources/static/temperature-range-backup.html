@@ -20,7 +20,7 @@
 </head>
 <body>
 
-<div>aa</div>
+<div>aa4</div>
 <div id="container"></div>
 <script>
 // 添加在 Highcharts.stockChart 之前
@@ -29,21 +29,21 @@ function loadData(chart, from, to) {
     if (chart.isLoading) {
         return;
     }
-	
+    
     const mainSeries = [chart.series[0], chart.series[1]];
     
     // 構建 URL，只有在參數存在時才添加
     const buildUrl = (seriesName) => {
         let url = `/api/temperature/${seriesName}/json`;
         const params = [];
-        if (from !== undefined) params.push(`from=${from}`);
-        if (to !== undefined) params.push(`to=${to}`);
+        if (from != null) params.push(`from=${from}`);
+        if (to != null) params.push(`to=${to}`);
         return params.length ? `${url}?${params.join('&')}` : url;
     };
-
+    
     // 顯示載入提示
     chart.showLoading('Loading data...');
-
+    
     const promises = mainSeries.map(series => {
         const url = buildUrl(series.name);
         console.log(`Fetching data from: ${url}`);
@@ -77,7 +77,6 @@ function loadData(chart, from, to) {
         .finally(() => {
             chart.hideLoading();
         });
-
 }
 
 Highcharts.stockChart('container', {
@@ -134,19 +133,59 @@ Highcharts.stockChart('container', {
     navigator: {
         enabled: true,
         height: 50,
-        adaptToUpdatedData: false,
-        series: {
-            type: 'areaspline',
-            lineWidth: 1
-        },
-        marker: {
-            enabled: false
+        series: [{
+            name: 'Helsinki',
+            data: [],
+            type: 'line',
+            color: '#7cb5ec',
+            fillOpacity: 0.05,
+            dataGrouping: {
+                enabled: false
+            },
+            lineWidth: 1,
+            marker: {
+                enabled: false
+            }
+        }, {
+            name: 'Turku',
+            data: [],
+            type: 'line',
+            color: '#434348',
+            fillOpacity: 0.05,
+            dataGrouping: {
+                enabled: false
+            },
+            lineWidth: 1,
+            marker: {
+                enabled: false
+            }
+        }],
+        xAxis: {
+            type: 'datetime'
         }
+    },
+    // Remove duplicate or misplaced code
+    // adaptToUpdatedData: false,
+    // series: [{
+    //     name: 'Helsinki Nav',
+    //     type: 'line',
+    //     lineWidth: 1,
+    //     data: []
+    // }, {
+    //     name: 'Turku Nav',
+    //     type: 'line',
+    //     lineWidth: 1,
+    //     data: []
+    // }],
+    // marker: {
+    //     enabled: false
+    // },
+    // minRange: 3600 * 1000
     },
     
     xAxis: {
         type: 'datetime',
-        minRange: 3600 * 1000,
+        minRange: 3600 * 1000, // 一小時，這是合理的最小範圍
         accessibility: {
             rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
         },
@@ -178,11 +217,30 @@ Highcharts.stockChart('container', {
     series: [{
         name: 'Helsinki',
         showInNavigator: true,
-        type: 'arearange'
+        type: 'arearange',
+        navigatorOptions: {
+            type: 'line',
+            lineWidth: 1,
+            // 使用平均值作為導航器數據
+            dataLabels: {
+                formatter: function () {
+                    return (this.point.low + this.point.high) / 2;
+                }
+            }
+        }
     }, {
         name: 'Turku',
         showInNavigator: true,
-        type: 'arearange'
+        type: 'arearange',
+        navigatorOptions: {
+            type: 'line',
+            lineWidth: 1,
+            dataLabels: {
+                formatter: function () {
+                    return (this.point.low + this.point.high) / 2;
+                }
+            }
+        }
     }]
 });
 </script>
