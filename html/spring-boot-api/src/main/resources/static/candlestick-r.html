@@ -23,144 +23,98 @@
 // 修改 dataURL
 const dataURL = '/api/temperature/Helsinki/candlestick';
 
+// 定義數據源
+const dataSeries = [
+    { name: 'Helsinki', url: '/api/temperature/Helsinki/candlestick' },
+    { name: 'Turku', url: '/api/temperature/Turku/candlestick' }
+];
+
 function afterSetExtremes(e) {
     const { chart } = e.target;
     chart.showLoading('Loading data from server...');
-    console.log(chart.series.map(series => series.name));
-    fetch(`${dataURL}?from=${Math.round(e.min)}&to=${Math.round(e.max)}`)
-        .then(res => res.ok && res.json())
-        .then(data => {
-            console.log('載入資料筆數:', data.length);
+    
+    Promise.all(dataSeries.map(series => 
+        fetch(`${series.url}?from=${Math.round(e.min)}&to=${Math.round(e.max)}`)
+            .then(res => res.ok && res.json())
+    )).then(results => {
+        results.forEach((data, index) => {
+            console.log(`載入 ${dataSeries[index].name} 資料筆數:`, data.length);
             if (data.length > 0) {
-                console.log('時間範圍:', 
-                    new Date(data[0][0]).toLocaleString(), 
-                    '到', 
+                console.log(`${dataSeries[index].name} 時間範圍:`,
+                    new Date(data[0][0]).toLocaleString(),
+                    '到',
                     new Date(data[data.length-1][0]).toLocaleString()
                 );
-            };
-            chart.series[0].setData(data);
-            chart.series[1].setData(data.map(item => [item[0], item[1]]));
-            chart.hideLoading();
-        }).catch(error => console.error(error.message));
+            }
+            chart.series[index].setData(data, false);
+        });
+        chart.redraw();
+        chart.hideLoading();
+    }).catch(error => console.error(error.message));
 }
 
+// 初始數據載入
+Promise.all(dataSeries.map(series => 
+    fetch(series.url)
+        .then(res => res.ok && res.json())
+)).then(results => {
+    // create the chart
+    Highcharts.stockChart('container', {
+        chart: {
+            type: 'candlestick',
+            zooming: {
+                type: 'x'
+            }
+        },
 
-fetch(dataURL)
-    .then(res => res.ok && res.json())
-    .then(data => {
-        console.log('載入資料筆數:', data.length);
-        if (data.length > 0) {
-            console.log('時間範圍:', 
-                new Date(data[0][0]).toLocaleString(), 
-                '到', 
-                new Date(data[data.length-1][0]).toLocaleString()
-            );
-        };
-
-        // create the chart
-        Highcharts.stockChart('container', {
-            chart: {
-                type: 'candlestick',
-                zooming: {
-                    type: 'x'
-                }
-            },
-
-            navigator: {
-                adaptToUpdatedData: false,
-                series: [{
-                    data: data,
-                    dataGrouping: {
-                        enabled: false
-                    }
-                }],
-                xAxis: {
-                    ordinal: false
-                }
-            },
-
-            scrollbar: {
-                liveRedraw: false
-            },
-
-            title: {
-                text: 'AAPL history by the minute from 1998 to 2011',
-                align: 'left'
-            },
-
-            subtitle: {
-                text: 'Displaying 1.7 million data points in Highcharts ' +
-                    'Stock by async server loading',
-                align: 'left'
-            },
-
-            rangeSelector: {
-                buttons: [{
-                    type: 'hour',
-                    count: 1,
-                    text: '1h'
-                }, {
-                    type: 'day',
-                    count: 1,
-                    text: '1d'
-                }, {
-                    type: 'month',
-                    count: 1,
-                    text: '1m'
-                }, {
-                    type: 'year',
-                    count: 1,
-                    text: '1y'
-                }, {
-                    type: 'all',
-                    text: 'All'
-                }],
-                inputEnabled: false, // it supports only days
-                selected: 4 // all
-            },
-
-            xAxis: {
-                events: {
-                    afterSetExtremes: afterSetExtremes
-                },
-                minRange: 3600 * 1000 // one hour
-            },
-
-            yAxis: {
-                floor: 0
-            },
-
-            tooltip: {
-                pointFormat: '<span style="color:{point.color}">●</span> <b>{series.name}</b><br/>' +
-                    'Value: {point.open}<br/>' +
-                    'Max: {point.high}<br/>' +
-                    'Min: {point.low}<br/>'
-            },
-
+        navigator: {
+            adaptToUpdatedData: false,
             series: [{
-                id: 'main',
-                name: 'Helsinki',  // 修改名稱
-                type: 'candlestick',
-                data: data,
+                data: results[0],
                 dataGrouping: {
                     enabled: false
-                },
-                color: 'darkblue',
-                upColor: 'darkblue',
-                lineColor: 'darkblue',
-                upLineColor: 'darkblue',
-                tooltip: {
-                    pointFormat: '<span style="color:{point.color}">●</span> <b>{series.name}</b><br/>' +
-                        'Value: {point.open}<br/>' +
-                        'Max: {point.high}<br/>' +
-                        'Min: {point.low}<br/>'
                 }
-            }]
-        });
-    }).catch(error => console.error(error.message));
-    
-    console.log(chart.series.map(series => series.name));
-    
+            }],
+            xAxis: {
+                ordinal: false
+            }
+        },
+
+        xAxis: {
+            events: {
+                afterSetExtremes: afterSetExtremes
+            },
+            minRange: 3600 * 1000 // one hour
+        },
+
+        scrollbar: {
+            liveRedraw: false
+        },
+
+        series: [{
+            id: 'helsinki-main',
+            name: 'Helsinki',
+            type: 'candlestick',
+            data: results[0],
+            dataGrouping: { enabled: false },
+            color: 'darkblue',
+            upColor: 'darkblue',
+            lineColor: 'darkblue',
+            upLineColor: 'darkblue'
+        }, {
+            id: 'turku-main',
+            name: 'Turku',
+            type: 'candlestick',
+            data: results[1],
+            dataGrouping: { enabled: false },
+            color: 'darkred',
+            upColor: 'darkred',
+            lineColor: 'darkred',
+            upLineColor: 'darkred'
+        }]
+    });
+});
+        
 </script>
 </body>
 </html>
