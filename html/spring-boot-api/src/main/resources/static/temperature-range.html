@@ -147,6 +147,20 @@ Highcharts.stockChart('container', {
         },
         marker: {
             enabled: false
+        },
+        // 添加 xAxis 配置
+        xAxis: {
+            labels: {
+                formatter: function() {
+                    const date = new Date(this.value);
+                    const startOfYear = new Date(date.getFullYear(), 0, 0);
+                    const diff = date - startOfYear;
+                    const oneDay = 1000 * 60 * 60 * 24;
+                    const dayOfYear = Math.floor(diff / oneDay);
+                    
+                    return `${date.getFullYear()}-${dayOfYear}`;
+                }
+            }
         }
     },
     
