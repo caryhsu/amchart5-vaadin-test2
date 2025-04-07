@@ -25,25 +25,113 @@ import java.time.ZoneId;
 @RequestMapping("/api/temperature")
 public class TemperatureController {
 
-    // @GetMapping("/csv")
-    // public ResponseEntity<byte[]> getTemperatures_Csv(
-    //         @RequestParam("from") long from,
-    //         @RequestParam("to") long to) {
+    @GetMapping("/{city}/csv")
+    public ResponseEntity<byte[]> getTemperatures_Csv(
+            @PathVariable String city,
+            @RequestParam(value = "from", required = false) Double from,
+            @RequestParam(value = "to", required = false) Double to) {
 
-    //     try {
-    //         ClassPathResource resource = new ClassPathResource("temperature-t.csv");
-    //         InputStream inputStream = resource.getInputStream();
-    //         byte[] csvBytes = inputStream.readAllBytes();
+        try {
+            System.out.println("----------------------------------------------->>>");
+            System.out.print("city = " + city + ", ");
+            System.out.print("from = " + from + 
+                (from != null ? " (" + LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(from.longValue()), 
+                    ZoneId.systemDefault()) + ")" : "") + ", ");
+            System.out.println("to = " + to + 
+                (to != null ? " (" + LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(to.longValue()), 
+                    ZoneId.systemDefault()) + ")" : ""));
 
-    //         return ResponseEntity.ok()
-    //                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.csv\"")
-    //                 .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
-    //                 .body(csvBytes);
+            System.out.println("--------------------------------------------------");
 
-    //     } catch (Exception e) {
-    //         return ResponseEntity.internalServerError().body(("Error reading CSV: " + e.getMessage()).getBytes());
-    //     }
-    // }
+
+            ClassPathResource resource = new ClassPathResource("temperature-t.csv");
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, List<List<Number>>> fullData = mapper.readValue(resource.getInputStream(), 
+                new TypeReference<Map<String, List<List<Number>>>>() {});
+            
+            List<List<Number>> cityData = fullData.get(city);
+            if (cityData == null) {
+                return ResponseEntity.notFound().build();
+            }
+    
+                
+            List<List<Number>> filterList = cityData.stream()
+                .filter(point -> {
+                    long timestamp = point.get(0).longValue();
+                    return (from == null || timestamp >= from) &&
+                           (to == null || timestamp <= to);
+                })
+                .toList();
+
+            List<List<Number>> result;
+            
+            if (from != null && to != null) {
+                Instant fromInstant = Instant.ofEpochMilli(from.longValue());
+                Instant toInstant = Instant.ofEpochMilli(to.longValue());
+
+                Duration duration = Duration.between(fromInstant, toInstant);
+                long days = duration.toDays();
+                long hours = duration.toHours() % 24;
+                if (days < 30 * 6 && days > 14) {
+                    // 內差法每兩小時一筆
+                    long step = 2 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 7) {
+                    // 內差法每小時一筆
+                    long step = 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (hours > 30) {
+                    // 內差法每五分鐘一筆
+                    long step = 5 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (hours > 7) {
+                    // 內差法每分鐘一筆
+                    long step = 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else {
+                    // 內差法每秒鐘一筆
+                    long step = 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+            } 
+            else {
+                result = filterList;
+            }
+
+            // 將 result 轉換為 CSV 格式
+            StringBuilder csv = new StringBuilder();
+            csv.append("timestamp,low,high,average\n"); // CSV 標題行
+            
+            for (List<Number> point : result) {
+                double low = point.get(1).doubleValue();
+                double high = point.get(2).doubleValue();
+                double average = (low + high) / 2;
+                
+                csv.append(String.format("%d,%.1f,%.1f,%.1f\n",
+                    point.get(0).longValue(), // timestamp
+                    low,
+                    high,
+                    average
+                ));
+            }
+            
+            byte[] csvBytes = csv.toString().getBytes(StandardCharsets.UTF_8);
+
+            return ResponseEntity.ok()
+                    // .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.csv\"")
+                    .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                    .body(csvBytes);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(("Error reading CSV: " + e.getMessage()).getBytes());
+        }
+    }
 
     @GetMapping("/{city}/json")
     public ResponseEntity<List<List<Number>>> getTemperatures_Json(

@@ -25,19 +25,14 @@
 <script>
 // 添加在 Highcharts.stockChart 之前
 function loadData(chart, from, to) {
-    // 如果已經在載入中，則跳過
+    
     if (chart.isLoading) {
         return;
     }
 	
-    // 使用更準確的方式識別主系列，排除 navigator 系列
+    // 修改過濾條件，確保能正確識別主系列
     const mainSeries = chart.series.filter(series => {
-        // 檢查該系列是否不在 scroller.series 中
-        const isNavigatorSeries = chart.scroller && 
-            chart.scroller.series && 
-            chart.scroller.series.some(navSeries => navSeries === series);
-        
-        return series.visible && !isNavigatorSeries && !series.navigatorSeries;
+        return !series.name.includes('Navigator');
     });
     
     // 構建 URL，只有在參數存在時才添加
@@ -48,6 +43,10 @@ function loadData(chart, from, to) {
         if (to) params.push(`to=${to}`);
         return params.length ? `${url}?${params.join('&')}` : url;
     };
+
+    // 如果已經在載入中，則跳過
+    console.log('loadData called', from, to);
+    console.log('mainSeries names:', mainSeries.map(series => series.name));
 
     // 顯示載入提示
     chart.showLoading('Loading data...');
@@ -96,9 +95,11 @@ Highcharts.stockChart('container', {
         },
         events: {
             load: function() {
-                
                 const chart = this;
-                // 先載入完整數據給 navigator
+                // 初始載入數據
+                loadData(chart);
+                
+                // TODO: 後續處理 navigator 數據
                 Promise.all([
                     fetch('/api/temperature/Helsinki/json'),
                     fetch('/api/temperature/Turku/json')
