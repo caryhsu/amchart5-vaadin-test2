@@ -25,7 +25,6 @@
 <script>
 // 添加在 Highcharts.stockChart 之前
 function loadData(chart, from, to) {
-    
     if (chart.isLoading) {
         return;
     }
@@ -51,28 +50,28 @@ function loadData(chart, from, to) {
         const url = buildUrl(series.name);
         console.log(`Fetching data from: ${url}`);
         
-        // 使用 Highcharts 的 data 模組
-        return new Promise((resolve, reject) => {
-            Highcharts.data({
-                csvURL: url,
-                beforeParse: function (csv) {
-                    return csv.replace(/\n\n/g, '\n');
-                },
-                complete: function (options) {
-                    const data = options.series[0].data.map(point => [
-                        point[0],  // timestamp
-                        point[1],  // low
-                        point[2]   // high
-                    ]);
-                    series.setData(data, false);
-                    resolve(true);
-                },
-                error: function (error) {
-                    console.error(`Error loading data for ${series.name}:`, error);
-                    reject(error);
+        return fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
+                return response.text();
+            })
+            .then(csvData => {
+                const lines = csvData.split('\n').slice(1);  // 跳過標題行
+                const data = lines
+                    .filter(line => line.trim())
+                    .map(line => {
+                        const [timestamp, low, high] = line.split(',').map(Number);
+                        return [timestamp, low, high];
+                    });
+                series.setData(data, false);
+                return true;
+            })
+            .catch(error => {
+                console.error(`Error loading data for ${series.name}:`, error);
+                return false;
             });
-        });
     });
 
     Promise.all(promises)
@@ -87,6 +86,35 @@ function loadData(chart, from, to) {
         });
 }
 
+function loadNavigatorData(chart) {
+    Promise.all([
+        fetch('/api/temperature/Helsinki/json'),
+        fetch('/api/temperature/Turku/json')
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([helsinkiData, turkuData]) => {
+        // 設置主圖表數據
+        chart.series[0].setData(helsinkiData, false);
+        chart.series[1].setData(turkuData, false);
+        
+        // 設置 navigator 數據
+        const helsinkiNavData = helsinkiData.map(point => [
+            point[0],
+            (point[1] + point[2]) / 2
+        ]);
+        const turkuNavData = turkuData.map(point => [
+            point[0],
+            (point[1] + point[2]) / 2
+        ]);
+        
+        // 更新 navigator 系列
+        chart.scroller.series[0].setData(helsinkiNavData, false);
+        chart.scroller.series[1].setData(turkuNavData, false);
+        
+        chart.redraw();
+    });
+}
+
 Highcharts.stockChart('container', {
     chart: {
         type: 'arearange',
@@ -98,34 +126,8 @@ Highcharts.stockChart('container', {
                 const chart = this;
                 // 初始載入數據
                 loadData(chart);
-                
-                // TODO: 後續處理 navigator 數據
-                Promise.all([
-                    fetch('/api/temperature/Helsinki/json'),
-                    fetch('/api/temperature/Turku/json')
-                ])
-                .then(responses => Promise.all(responses.map(r => r.json())))
-                .then(([helsinkiData, turkuData]) => {
-                    // 設置主圖表數據
-                    chart.series[0].setData(helsinkiData, false);
-                    chart.series[1].setData(turkuData, false);
-                    
-                    // 設置 navigator 數據
-                    const helsinkiNavData = helsinkiData.map(point => [
-                        point[0],
-                        (point[1] + point[2]) / 2
-                    ]);
-                    const turkuNavData = turkuData.map(point => [
-                        point[0],
-                        (point[1] + point[2]) / 2
-                    ]);
-                    
-                    // 更新 navigator 系列
-                    chart.scroller.series[0].setData(helsinkiNavData, false);
-                    chart.scroller.series[1].setData(turkuNavData, false);
-                    
-                    chart.redraw();
-                });
+                // 載入 navigator 數據
+                loadNavigatorData(chart);
             }
         }
     },
