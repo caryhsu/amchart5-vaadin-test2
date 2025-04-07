@@ -87,15 +87,13 @@ function loadData(chart, from, to) {
 }
 
 function loadNavigatorData(chart) {
+
     Promise.all([
         fetch('/api/temperature/Helsinki/json'),
         fetch('/api/temperature/Turku/json')
     ])
     .then(responses => Promise.all(responses.map(r => r.json())))
     .then(([helsinkiData, turkuData]) => {
-        // 設置主圖表數據
-        chart.series[0].setData(helsinkiData, false);
-        chart.series[1].setData(turkuData, false);
         
         // 設置 navigator 數據
         const helsinkiNavData = helsinkiData.map(point => [
