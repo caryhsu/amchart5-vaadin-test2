@@ -156,6 +156,29 @@ Highcharts.stockChart('container', {
         accessibility: {
             rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
         },
+        // 使用自定義標籤格式化函數
+        labels: {
+            formatter: function() {
+                const date = new Date(this.value);
+                const startOfYear = new Date(date.getFullYear(), 0, 0);
+                const diff = date - startOfYear;
+                const oneDay = 1000 * 60 * 60 * 24;
+                const dayOfYear = Math.floor(diff / oneDay);
+                
+                // 根據時間間隔選擇不同的格式
+                if (this.chart.xAxis[0].tickInterval < 24 * 3600 * 1000) {
+                    // 小於一天的間隔，顯示時間
+                    return Highcharts.dateFormat('%H:%M', this.value);
+                } else if (this.chart.xAxis[0].tickInterval < 31 * 24 * 3600 * 1000) {
+                    // 小於一個月的間隔，顯示年份和DOY
+                    return `${date.getFullYear()}-${dayOfYear}`;
+                } else {
+                    // 大於一個月的間隔，只顯示年份
+                    // return date.getFullYear().toString();
+                    return `${date.getFullYear()}-${dayOfYear}`;
+                }
+            }
+        },
         dateTimeLabelFormats: {
             millisecond: '%H:%M:%S.%L',
             second: '%H:%M:%S',
@@ -184,13 +207,27 @@ Highcharts.stockChart('container', {
         crosshairs: true,
         shared: true,
         valueSuffix: '°C',
-        xDateFormat: '%Y-%m-%d %H:%M'  // 修改為 年-月-日 時:分 格式
+        formatter: function() {
+            const date = new Date(this.x);
+            const startOfYear = new Date(date.getFullYear(), 0, 0);
+            const diff = date - startOfYear;
+            const oneDay = 1000 * 60 * 60 * 24;
+            const dayOfYear = Math.floor(diff / oneDay);
+            
+            let s = `<b>${date.getFullYear()}-${dayOfYear} (${Highcharts.dateFormat('%H:%M', this.x)})</b>`;
+            
+            this.points.forEach(function(point) {
+                s += `<br/>${point.series.name}: ${point.point.low.toFixed(1)}°C - ${point.point.high.toFixed(1)}°C`;
+            });
+            
+            return s;
+        }
     },
     legend: {
         enabled: true,
-        align: 'right',
-        verticalAlign: 'top',
-        layout: 'vertical'
+        align: 'center',     // 水平居中
+        verticalAlign: 'bottom', // 放在底部
+        layout: 'horizontal'  // 水平排列
     },
     series: [{
         name: 'Helsinki',
