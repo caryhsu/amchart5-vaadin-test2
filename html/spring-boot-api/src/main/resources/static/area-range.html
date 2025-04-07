@@ -201,7 +201,16 @@ Highcharts.stockChart('container', {
         accessibility: {
             rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
         },
-        // 使用自定義標籤格式化函數
+        dateTimeLabelFormats: {
+                millisecond: '%H:%M:%S.%L',
+                second: '%H:%M:%S',
+                minute: '%H:%M',
+                hour: '%H:%M',
+                day: '%m-%d',
+                week: '%m-%d',
+                month: '%Y-%m',
+                year: '%Y'
+        },
         labels: {
             formatter: function() {
                 const date = new Date(this.value);

@@ -118,6 +118,14 @@ Promise.all(dataSeries.map(series =>
             }
         },
 
+        yAxis: {
+            opposite: false,  // 設置在左側
+            labels: {
+                align: 'right',
+                x: -5
+            }
+        },
+
         scrollbar: {
             liveRedraw: false
         },
