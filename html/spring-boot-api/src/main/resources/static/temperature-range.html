@@ -30,12 +30,15 @@ function loadData(chart, from, to) {
         return;
     }
 	
-    const mainSeries = chart.series.filter(series => 
-        series.options.showInNavigator !== false && 
-        !series.navigatorSeries && 
-        series.visible &&
-        !series.name.includes("Nav")  // 排除名稱中包含 "Nav" 的系列
-    );
+    // 使用更準確的方式識別主系列，排除 navigator 系列
+    const mainSeries = chart.series.filter(series => {
+        // 檢查該系列是否不在 scroller.series 中
+        const isNavigatorSeries = chart.scroller && 
+            chart.scroller.series && 
+            chart.scroller.series.some(navSeries => navSeries === series);
+        
+        return series.visible && !isNavigatorSeries && !series.navigatorSeries;
+    });
     
     // 構建 URL，只有在參數存在時才添加
     const buildUrl = (seriesName) => {
