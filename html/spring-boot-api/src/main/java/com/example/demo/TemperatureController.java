@@ -127,6 +127,11 @@ public class TemperatureController {
                     long step = 6 * 60 * 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
+                else if (days > 30 * 5) {
+                    // 內差法每5小時一筆
+                    long step = 5 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
                 else if (days > 14) {
                     // 內差法每兩小時一筆
                     long step = 2 * 60 * 60 * 1000;
@@ -240,6 +245,11 @@ public class TemperatureController {
                     long step = 6 * 60 * 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
+                else if (days > 30 * 5) {
+                    // 內差法每5小時一筆
+                    long step = 5 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
                 else if (days > 14) {
                     // 內差法每兩小時一筆
                     long step = 2 * 60 * 60 * 1000;
@@ -334,6 +344,11 @@ public class TemperatureController {
                 if (days > 30 * 6) {
                     // 內差法每6小時一筆
                     long step = 6 * 60 * 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 30 * 5) {
+                    // 內差法每5小時一筆
+                    long step = 5 * 60 * 60 * 1000;
                     interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else if (days > 14) {

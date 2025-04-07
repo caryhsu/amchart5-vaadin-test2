@@ -68,8 +68,14 @@ fetch(dataURL)
 
             navigator: {
                 adaptToUpdatedData: false,
-                series: {
-                    data: data
+                series: [{
+                    data: data,
+                    dataGrouping: {
+                        enabled: false
+                    }
+                }],
+                xAxis: {
+                    ordinal: false
                 }
             },
 
@@ -149,15 +155,6 @@ fetch(dataURL)
                         'Max: {point.high}<br/>' +
                         'Min: {point.low}<br/>'
                 }
-            }, {
-                linkedTo: 'main',
-                name: 'Helsinki',  // 修改名稱
-                type: 'line',
-                data: data.map(item => [item[0], item[1]]),
-                color: 'darkblue',
-                lineWidth: 1,
-                zIndex: 2,
-                enableMouseTracking: false  // 關閉這個 series 的 tooltip
             }]
         });
     }).catch(error => console.error(error.message));
