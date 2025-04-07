@@ -55,7 +55,8 @@ fetch(dataURL)
                 adaptToUpdatedData: false,
                 series: {
                     data: data
-                }
+                },
+                minRange: 3600 * 1000 // one hour
             },
 
             scrollbar: {

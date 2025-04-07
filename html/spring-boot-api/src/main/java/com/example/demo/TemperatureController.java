@@ -46,7 +46,7 @@ public class TemperatureController {
             System.out.println("--------------------------------------------------");
 
 
-            ClassPathResource resource = new ClassPathResource("temperature-t.csv");
+            ClassPathResource resource = new ClassPathResource("temperature-t.json");
             ObjectMapper mapper = new ObjectMapper();
             Map<String, List<List<Number>>> fullData = mapper.readValue(resource.getInputStream(), 
                 new TypeReference<Map<String, List<List<Number>>>>() {});
@@ -124,7 +124,7 @@ public class TemperatureController {
             byte[] csvBytes = csv.toString().getBytes(StandardCharsets.UTF_8);
 
             return ResponseEntity.ok()
-                    // .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.csv\"")
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.csv\"")
                     .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
                     .body(csvBytes);
 
