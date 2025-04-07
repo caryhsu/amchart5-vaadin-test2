@@ -156,6 +156,16 @@ Highcharts.stockChart('container', {
         accessibility: {
             rangeDescription: 'Range: Jan 1st 2023 to Jan 1st 2024.'
         },
+        dateTimeLabelFormats: {
+            millisecond: '%H:%M:%S.%L',
+            second: '%H:%M:%S',
+            minute: '%H:%M',
+            hour: '%H:%M',
+            day: '%m-%d',
+            week: '%m-%d',
+            month: '%Y-%m',
+            year: '%Y'
+        },
         events: {
             afterSetExtremes: function(e) {
                 console.log("xAxis.afterSetExtremes", e.min, e.max);
@@ -174,7 +184,7 @@ Highcharts.stockChart('container', {
         crosshairs: true,
         shared: true,
         valueSuffix: '°C',
-        xDateFormat: '%A, %b %e'
+        xDateFormat: '%Y-%m-%d %H:%M'  // 修改為 年-月-日 時:分 格式
     },
     legend: {
         enabled: true,
