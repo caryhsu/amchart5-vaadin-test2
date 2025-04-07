@@ -29,51 +29,52 @@ function loadData(chart, from, to) {
     if (chart.isLoading) {
         return;
     }
-	
-    // 修改過濾條件，確保能正確識別主系列
+    
     const mainSeries = chart.series.filter(series => {
         return !series.name.includes('Navigator');
     });
     
-    // 構建 URL，只有在參數存在時才添加
     const buildUrl = (seriesName) => {
-        let url = `/api/temperature/${seriesName}/json`;
+        let url = `/api/temperature/${seriesName}/csv`;
         const params = [];
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
         return params.length ? `${url}?${params.join('&')}` : url;
     };
 
-    // 如果已經在載入中，則跳過
     console.log('loadData called', from, to);
     console.log('mainSeries names:', mainSeries.map(series => series.name));
 
-    // 顯示載入提示
     chart.showLoading('Loading data...');
 
     const promises = mainSeries.map(series => {
         const url = buildUrl(series.name);
         console.log(`Fetching data from: ${url}`);
-        return fetch(url)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+        
+        // 使用 Highcharts 的 data 模組
+        return new Promise((resolve, reject) => {
+            Highcharts.data({
+                csvURL: url,
+                beforeParse: function (csv) {
+                    return csv.replace(/\n\n/g, '\n');
+                },
+                complete: function (options) {
+                    const data = options.series[0].data.map(point => [
+                        point[0],  // timestamp
+                        point[1],  // low
+                        point[2]   // high
+                    ]);
+                    series.setData(data, false);
+                    resolve(true);
+                },
+                error: function (error) {
+                    console.error(`Error loading data for ${series.name}:`, error);
+                    reject(error);
                 }
-                return response.json();
-            })
-            // 在 loadData 函數中，移除 navigator 數據更新的部分
-            .then(data => {
-                console.log(`Data for ${series.name}:`, data);
-                series.setData(data, false);
-                return true;
-            })
-            .catch(error => {
-                console.error(`Error loading data for ${series.name}:`, error);
-                return false;
             });
+        });
     });
 
-    // 確保無論成功或失敗都會執行
     Promise.all(promises)
         .then(() => {
             chart.redraw();
@@ -84,7 +85,6 @@ function loadData(chart, from, to) {
         .finally(() => {
             chart.hideLoading();
         });
-
 }
 
 Highcharts.stockChart('container', {
