@@ -65,6 +65,15 @@ function loadData(chart, from, to) {
                         const [timestamp, low, high] = line.split(',').map(Number);
                         return [timestamp, low, high];
                     });
+
+                console.log('載入資料筆數:', data.length);
+                if (data.length > 0) {
+                    console.log('時間範圍:', 
+                        new Date(data[0][0]).toLocaleString(), 
+                        '到', 
+                        new Date(data[data.length-1][0]).toLocaleString()
+                    );
+                };
                 series.setData(data, false);
                 return true;
             })
@@ -113,9 +122,19 @@ function loadNavigatorData(chart) {
                         return [timestamp, value];
                     });
             });
-
+            
             // 更新每個 navigator 系列的數據
             navigatorDataArray.forEach((data, index) => {
+
+                console.log('載入navigator資料筆數:', data.length);
+                if (data.length > 0) {
+                    console.log('時間範圍:', 
+                        new Date(data[0][0]).toLocaleString(), 
+                        '到', 
+                        new Date(data[data.length-1][0]).toLocaleString()
+                    );
+                };
+
                 chart.scroller.series[index].setData(data, false);
             });
         });

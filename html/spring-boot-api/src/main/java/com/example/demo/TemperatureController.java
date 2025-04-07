@@ -119,8 +119,15 @@ public class TemperatureController {
 
                 Duration duration = Duration.between(fromInstant, toInstant);
                 long days = duration.toDays();
-                long hours = duration.toHours() % 24;
-                if (days < 30 * 6 && days > 14) {
+                long hours = duration.toHours();
+                long leftHours = hours % 24;
+
+                if (days > 30 * 6) {
+                    // 內差法每6小時一筆
+                    long step = 6 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 14) {
                     // 內差法每兩小時一筆
                     long step = 2 * 60 * 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
@@ -136,8 +143,8 @@ public class TemperatureController {
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else if (hours > 7) {
-                    // 內差法每分鐘一筆
-                    long step = 60 * 1000;
+                    // 內差法30秒一筆
+                    long step = 30 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else {
@@ -225,8 +232,15 @@ public class TemperatureController {
 
                 Duration duration = Duration.between(fromInstant, toInstant);
                 long days = duration.toDays();
-                long hours = duration.toHours() % 24;
-                if (days < 30 * 6 && days > 14) {
+                long hours = duration.toHours();
+                long leftHours = hours % 24;
+
+                if (days > 30 * 6) {
+                    // 內差法每6小時一筆
+                    long step = 6 * 60 * 60 * 1000;
+                    result = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 14) {
                     // 內差法每兩小時一筆
                     long step = 2 * 60 * 60 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
@@ -242,8 +256,8 @@ public class TemperatureController {
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else if (hours > 7) {
-                    // 內差法每分鐘一筆
-                    long step = 60 * 1000;
+                    // 內差法30秒一筆
+                    long step = 30 * 1000;
                     result = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else {
@@ -310,8 +324,19 @@ public class TemperatureController {
 
                 Duration duration = Duration.between(fromInstant, toInstant);
                 long days = duration.toDays();
-                long hours = duration.toHours() % 24;
-                if (days < 30 * 6 && days > 14) {
+                long hours = duration.toHours();
+                long leftHours = hours % 24;
+                
+                System.out.println("------------------------");
+                System.out.println("days = " + days + ", hours = " + hours);
+                System.out.println("------------------------");
+
+                if (days > 30 * 6) {
+                    // 內差法每6小時一筆
+                    long step = 6 * 60 * 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 14) {
                     // 內差法每兩小時一筆
                     long step = 2 * 60 * 60 * 1000;
                     interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
@@ -327,8 +352,8 @@ public class TemperatureController {
                     interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else if (hours > 7) {
-                    // 內差法每分鐘一筆
-                    long step = 60 * 1000;
+                    // 內差法30秒一筆
+                    long step = 30 * 1000;
                     interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
                 }
                 else {
@@ -353,8 +378,8 @@ public class TemperatureController {
                     List<Number> newPoint = new ArrayList<>();
                     newPoint.add(timestamp);
                     newPoint.add(open);
-                    newPoint.add(low);
                     newPoint.add(high);
+                    newPoint.add(low);
                     newPoint.add(close);
                     return newPoint;
                 })
