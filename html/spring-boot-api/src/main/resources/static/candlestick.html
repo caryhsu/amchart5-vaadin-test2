@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Highcharts Lazy Loading Example</title>
+    <!-- 引入 Highcharts -->
+    <script src="https://code.highcharts.com/stock/highstock.js"></script>
+    <script src="https://code.highcharts.com/stock/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+        <style>
+        #container {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="container"></div>
+<script>
+const dataURL = 'https://demo-live-data.highcharts.com/aapl-historical.json';
+
+/**
+ * Load new data depending on the selected min and max
+ */
+function afterSetExtremes(e) {
+    const { chart } = e.target;
+    chart.showLoading('Loading data from server...');
+    fetch(`${dataURL}?start=${Math.round(e.min)}&end=${Math.round(e.max)}`)
+        .then(res => res.ok && res.json())
+        .then(data => {
+            const processedData = data.map(item => {
+                const fixedValue = item[4];
+                return [
+                    item[0],     // 時間戳
+                    fixedValue,  // open
+                    item[2],     // high
+                    item[3],     // low
+                    fixedValue   // close
+                ];
+            });
+            
+            chart.series[0].setData(processedData);
+            chart.series[1].setData(processedData.map(item => [item[0], item[1]]));
+            chart.hideLoading();
+        }).catch(error => console.error(error.message));
+}
+
+fetch(dataURL)
+    .then(res => res.ok && res.json())
+    .then(data => {
+        // 處理數據，將 open 和 close 設為相同值
+        const processedData = data.map(item => {
+            // 使用收盤價作為固定值（或者您可以選擇其他值）
+            const fixedValue = item[4]; // 使用收盤價
+            
+            // 檢查數據
+            console.log('Original:', {
+                time: new Date(item[0]),
+                open: item[1],
+                high: item[2],
+                low: item[3],
+                close: item[4]
+            });
+            
+            console.log('Processed:', {
+                time: new Date(item[0]),
+                open: fixedValue,
+                high: item[2],
+                low: item[3],
+                close: fixedValue
+            });
+
+            return [
+                item[0],     // 時間戳
+                fixedValue,  // open
+                item[2],     // high
+                item[3],     // low
+                fixedValue   // close
+            ];
+        });
+
+        // Add a null value for the end date
+        processedData.push(['2011-10-14 18:00', null, null, null, null]);
+
+        // create the chart
+        Highcharts.stockChart('container', {
+            chart: {
+                type: 'candlestick',
+                zooming: {
+                    type: 'x'
+                }
+            },
+
+            navigator: {
+                adaptToUpdatedData: false,
+                series: {
+                    data: data
+                }
+            },
+
+            scrollbar: {
+                liveRedraw: false
+            },
+
+            title: {
+                text: 'AAPL history by the minute from 1998 to 2011',
+                align: 'left'
+            },
+
+            subtitle: {
+                text: 'Displaying 1.7 million data points in Highcharts ' +
+                    'Stock by async server loading',
+                align: 'left'
+            },
+
+            rangeSelector: {
+                buttons: [{
+                    type: 'hour',
+                    count: 1,
+                    text: '1h'
+                }, {
+                    type: 'day',
+                    count: 1,
+                    text: '1d'
+                }, {
+                    type: 'month',
+                    count: 1,
+                    text: '1m'
+                }, {
+                    type: 'year',
+                    count: 1,
+                    text: '1y'
+                }, {
+                    type: 'all',
+                    text: 'All'
+                }],
+                inputEnabled: false, // it supports only days
+                selected: 4 // all
+            },
+
+            xAxis: {
+                events: {
+                    afterSetExtremes: afterSetExtremes
+                },
+                minRange: 3600 * 1000 // one hour
+            },
+
+            yAxis: {
+                floor: 0
+            },
+
+            tooltip: {
+                pointFormat: '<span style="color:{point.color}">●</span> <b>{series.name}</b><br/>' +
+                    'Value: {point.open}<br/>' +
+                    'Max: {point.high}<br/>' +
+                    'Min: {point.low}<br/>'
+            },
+
+            series: [{
+                id: 'main',
+                name: 'AAPL',
+                type: 'candlestick',
+                data: processedData,
+                dataGrouping: {
+                    enabled: false
+                },
+                color: 'darkblue',
+                upColor: 'darkblue',
+                lineColor: 'darkblue',
+                upLineColor: 'darkblue',
+                tooltip: {
+                    pointFormat: '<span style="color:{point.color}">●</span> <b>{series.name}</b><br/>' +
+                        'Value: {point.open}<br/>' +
+                        'Max: {point.high}<br/>' +
+                        'Min: {point.low}<br/>'
+                }
+            }, {
+                linkedTo: 'main',
+                name: 'AAPL',
+                type: 'line',
+                data: processedData.map(item => item && [item[0], item[1]]),
+                color: 'darkblue',
+                lineWidth: 1,
+                zIndex: 2,
+                enableMouseTracking: false  // 關閉這個 series 的 tooltip
+            }]
+        });
+    }).catch(error => console.error(error.message));</script>
+</body>
+</html>

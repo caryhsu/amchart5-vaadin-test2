@@ -25,6 +25,52 @@ import java.time.ZoneId;
 @RequestMapping("/api/temperature")
 public class TemperatureController {
 
+    @GetMapping("/{city}/navigator/csv")
+    public ResponseEntity<byte[]> getTemperatures_navigator(
+            @PathVariable String city) {
+
+        try {
+            System.out.println("----------------------------------------------->>>");
+            System.out.println("city = " + city + ", ");
+            System.out.println("--------------------------------------------------");
+
+            ClassPathResource resource = new ClassPathResource("temperature-t.json");
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, List<List<Number>>> fullData = mapper.readValue(resource.getInputStream(), 
+                new TypeReference<Map<String, List<List<Number>>>>() {});
+            
+            List<List<Number>> cityData = fullData.get(city);
+            if (cityData == null) {
+                return ResponseEntity.notFound().build();
+            }
+                
+            // 將 result 轉換為 CSV 格式
+            StringBuilder csv = new StringBuilder();
+            csv.append("timestamp,value\n"); // CSV 標題行
+            
+            for (List<Number> point : cityData) {
+                double low = point.get(1).doubleValue();
+                double high = point.get(2).doubleValue();
+                double average = (low + high) / 2;
+                
+                csv.append(String.format("%d,%.1f\n",
+                    point.get(0).longValue(), // timestamp
+                    average
+                ));
+            }
+            
+            byte[] csvBytes = csv.toString().getBytes(StandardCharsets.UTF_8);
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"temperature.csv\"")
+                    .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                    .body(csvBytes);
+
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(("Error reading CSV: " + e.getMessage()).getBytes());
+        }
+    }
+
     @GetMapping("/{city}/csv")
     public ResponseEntity<byte[]> getTemperatures_Csv(
             @PathVariable String city,
@@ -210,6 +256,110 @@ public class TemperatureController {
                 result = filterList;
             }
  
+            return ResponseEntity.ok(result);
+            
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+
+    @GetMapping("/{city}/candlestick")
+    public ResponseEntity<List<List<Number>>> getTemperatures_Candlesitck(
+            @PathVariable String city,
+            @RequestParam(value = "from", required = false) Double from,
+            @RequestParam(value = "to", required = false) Double to) {
+
+        try {
+            System.out.println("----------------------------------------------->>>");
+            System.out.print("city = " + city + ", ");
+            System.out.print("from = " + from + 
+                (from != null ? " (" + LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(from.longValue()), 
+                    ZoneId.systemDefault()) + ")" : "") + ", ");
+            System.out.println("to = " + to + 
+                (to != null ? " (" + LocalDateTime.ofInstant(
+                    Instant.ofEpochMilli(to.longValue()), 
+                    ZoneId.systemDefault()) + ")" : ""));
+
+            System.out.println("--------------------------------------------------");
+
+            ClassPathResource resource = new ClassPathResource("temperature-t.json");
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, List<List<Number>>> fullData = mapper.readValue(resource.getInputStream(), 
+                new TypeReference<Map<String, List<List<Number>>>>() {});
+            
+            List<List<Number>> cityData = fullData.get(city);
+            if (cityData == null) {
+                return ResponseEntity.notFound().build();
+            }
+
+            List<List<Number>> filterList = cityData.stream()
+                .filter(point -> {
+                    long timestamp = point.get(0).longValue();
+                    return (from == null || timestamp >= from) &&
+                           (to == null || timestamp <= to);
+                })
+                .toList();
+
+            List<List<Number>> interpolateData;
+            
+            if (from != null && to != null) {
+                Instant fromInstant = Instant.ofEpochMilli(from.longValue());
+                Instant toInstant = Instant.ofEpochMilli(to.longValue());
+
+                Duration duration = Duration.between(fromInstant, toInstant);
+                long days = duration.toDays();
+                long hours = duration.toHours() % 24;
+                if (days < 30 * 6 && days > 14) {
+                    // 內差法每兩小時一筆
+                    long step = 2 * 60 * 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (days > 7) {
+                    // 內差法每小時一筆
+                    long step = 60 * 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (hours > 30) {
+                    // 內差法每五分鐘一筆
+                    long step = 5 * 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else if (hours > 7) {
+                    // 內差法每分鐘一筆
+                    long step = 60 * 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+                else {
+                    // 內差法每秒鐘一筆
+                    long step = 1000;
+                    interpolateData = interpolateData(filterList, from.longValue(), to.longValue(), step);
+                }
+            } 
+            else {
+                interpolateData = filterList;
+            }
+
+            List<List<Number>> result = interpolateData.stream()
+                .map(point -> {
+                    long timestamp = point.get(0).longValue();
+                    double low = point.get(1).doubleValue();
+                    double high = point.get(2).doubleValue();
+                    double average = (low + high) / 2;
+                    double open = average;
+                    double close = average;
+                    // 使用 ArrayList 代替 List.of()
+                    List<Number> newPoint = new ArrayList<>();
+                    newPoint.add(timestamp);
+                    newPoint.add(open);
+                    newPoint.add(low);
+                    newPoint.add(high);
+                    newPoint.add(close);
+                    return newPoint;
+                })
+                .toList();
+
             return ResponseEntity.ok(result);
             
         } catch (Exception e) {
